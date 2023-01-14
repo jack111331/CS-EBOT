@@ -371,8 +371,7 @@ void Waypoint::ChangeZBCampPoint(Vector origin)
     {
         for (int i = m_zmHmPoints.GetElementNumber(); i >= 0; i--)
         {
-            int wpIndex;
-            m_zmHmPoints.GetAt(i, wpIndex);
+            int wpIndex = m_zmHmPoints.GetAt(i);
 
             if (IsValidWaypoint(wpIndex))
             {
@@ -406,8 +405,7 @@ bool Waypoint::IsZBCampPoint(int pointID, bool checkMesh)
 
     for (int i = 0; i <= m_zmHmPoints.GetElementNumber(); i++)
     {
-        int wpIndex;
-        m_zmHmPoints.GetAt(i, wpIndex);
+        int wpIndex = m_zmHmPoints.GetAt(i);
 
         if (pointID == wpIndex)
             return true;
@@ -417,8 +415,7 @@ bool Waypoint::IsZBCampPoint(int pointID, bool checkMesh)
     {
         for (int i = 0; i <= m_hmMeshPoints.GetElementNumber(); i++)
         {
-            int wpIndex;
-            m_hmMeshPoints.GetAt(i, wpIndex);
+            int wpIndex = m_hmMeshPoints.GetAt(i);
 
             if (pointID == wpIndex)
                 return true;
@@ -590,7 +587,7 @@ void Waypoint::SgdWp_Set(const char* modset)
         {
             Initialize();
             Load(1);
-            ChartPrint("[SgdWP] I find the bad waypoint data ***");
+            ChartPrint("[SgdWP] Bad waypoint data found ***");
             ChartPrint("[SgdWP] And I will load your bad waypoint data now ***");
             ChartPrint("[SgdWP] If this is bad waypoint, you need delete this ***");
         }
@@ -615,6 +612,13 @@ void Waypoint::SgdWp_Set(const char* modset)
         g_sautoWaypoint = false;
         g_sgdWaypoint = false;
         g_waypointOn = false;
+        extern ConVar ebot_quota;
+        ebot_quota.SetInt(10);
+        ServerCommand("mp_roundtime 9");
+        ServerCommand("sv_restart 1");
+        ServerCommand("mp_timelimit 0");
+        ServerCommand("mp_freezetime 0.5");
+
     }
     else if ((stricmp(modset, "save") == 0 || stricmp(modset, "save_non-check") == 0) && g_sgdWaypoint)
     {
@@ -625,7 +629,7 @@ void Waypoint::SgdWp_Set(const char* modset)
             g_sgdWaypoint = false;
             g_waypointOn = false;
 
-            ChartPrint("[SgdWP] Save your waypoint - Finsh *******");
+            ChartPrint("[SgdWP] Save your waypoint - Finished *******");
             ChartPrint("[SgdWP] Please waypoints and restart the map *******");
         }
         else
@@ -1460,46 +1464,40 @@ void Waypoint::CalculateWayzone(int index)
         path->radius = 0.0f;
 }
 
-void Waypoint::InitTypes(int mode)
+void Waypoint::InitTypes()
 {
-    if (mode == 0)
-    {
-        m_terrorPoints.RemoveAll();
-        m_ctPoints.RemoveAll();
-        m_goalPoints.RemoveAll();
-        m_campPoints.RemoveAll();
-        m_rescuePoints.RemoveAll();
-        m_sniperPoints.RemoveAll();
-        m_visitedGoals.RemoveAll();
-        m_zmHmPoints.RemoveAll();
-        m_hmMeshPoints.RemoveAll();
-        m_otherPoints.RemoveAll();
-    }
+    m_terrorPoints.RemoveAll();
+    m_ctPoints.RemoveAll();
+    m_goalPoints.RemoveAll();
+    m_campPoints.RemoveAll();
+    m_rescuePoints.RemoveAll();
+    m_sniperPoints.RemoveAll();
+    m_visitedGoals.RemoveAll();
+    m_zmHmPoints.RemoveAll();
+    m_hmMeshPoints.RemoveAll();
+    m_otherPoints.RemoveAll();
 
     for (int i = 0; i < g_numWaypoints; i++)
     {
-        if (mode == 0)
-        {
-            if (m_paths[i]->flags & WAYPOINT_TERRORIST)
-                m_terrorPoints.Push(i);
-            else if (m_paths[i]->flags & WAYPOINT_COUNTER)
-                m_ctPoints.Push(i);
-            else if (m_paths[i]->flags & WAYPOINT_GOAL)
-                m_goalPoints.Push(i);
-            else if (m_paths[i]->flags & WAYPOINT_CAMP)
-                m_campPoints.Push(i);
-            else if (m_paths[i]->flags & WAYPOINT_SNIPER)
-                m_sniperPoints.Push(i);
-            else if (m_paths[i]->flags & WAYPOINT_RESCUE)
-                m_rescuePoints.Push(i);
-            else if (m_paths[i]->flags & WAYPOINT_ZMHMCAMP)
-                m_zmHmPoints.Push(i);
-            else if (m_paths[i]->flags & WAYPOINT_HMCAMPMESH)
-                m_hmMeshPoints.Push(i);
+        if (m_paths[i]->flags & WAYPOINT_TERRORIST)
+            m_terrorPoints.Push(i);
+        else if (m_paths[i]->flags & WAYPOINT_COUNTER)
+            m_ctPoints.Push(i);
+        else if (m_paths[i]->flags & WAYPOINT_GOAL)
+            m_goalPoints.Push(i);
+        else if (m_paths[i]->flags & WAYPOINT_CAMP)
+            m_campPoints.Push(i);
+        else if (m_paths[i]->flags & WAYPOINT_SNIPER)
+            m_sniperPoints.Push(i);
+        else if (m_paths[i]->flags & WAYPOINT_RESCUE)
+            m_rescuePoints.Push(i);
+        else if (m_paths[i]->flags & WAYPOINT_ZMHMCAMP)
+            m_zmHmPoints.Push(i);
+        else if (m_paths[i]->flags & WAYPOINT_HMCAMPMESH)
+            m_hmMeshPoints.Push(i);
 
-            if (!(m_paths[i]->flags & WAYPOINT_AVOID) && !(m_paths[i]->flags & WAYPOINT_ONLYONE) && !(m_paths[i]->flags & WAYPOINT_CROUCH) && !(m_paths[i]->flags & WAYPOINT_WAITUNTIL) && !(m_paths[i]->flags & WAYPOINT_FALLCHECK) && !(m_paths[i]->flags & WAYPOINT_LADDER))
-                m_otherPoints.Push(i);
-        }
+        if (!(m_paths[i]->flags & WAYPOINT_AVOID) && !(m_paths[i]->flags & WAYPOINT_ONLYONE) && !(m_paths[i]->flags & WAYPOINT_CROUCH) && !(m_paths[i]->flags & WAYPOINT_WAITUNTIL) && !(m_paths[i]->flags & WAYPOINT_FALLCHECK) && !(m_paths[i]->flags & WAYPOINT_LADDER))
+            m_otherPoints.Push(i);
     }
 }
 
@@ -1514,7 +1512,8 @@ bool Waypoint::Load(int mode)
     {
         fp.Read(&header, sizeof(header));
 
-        if (strncmp(header.header, FH_WAYPOINT_NEW, strlen(FH_WAYPOINT_NEW)) == 0)
+        if (strncmp(header.header, FH_WAYPOINT_NEW, strlen(FH_WAYPOINT_NEW)) == 0 ||
+            strncmp(header.header, FH_WAYPOINT, strlen(FH_WAYPOINT)) == 0)
         {
             if (stricmp(header.mapName, GetMapName()) && mode == 0)
             {
@@ -1535,46 +1534,23 @@ bool Waypoint::Load(int mode)
                 {
                     m_paths[i] = new Path;
                     if (m_paths[i] == nullptr)
+                    {
+                        for (int j = 0; j < i; j++)
+                        {
+                            delete m_paths[i];
+                            m_paths[i] = nullptr;
+                        }
+                        g_numWaypoints = 0;
+                        m_waypointPaths = false;
                         return false;
-
+                    }
                     fp.Read(m_paths[i], sizeof(Path));
                 }
-
-                m_waypointPaths = true;
-            }
-        }
-        else if (strncmp(header.header, FH_WAYPOINT, strlen(FH_WAYPOINT)) == 0)
-        {
-            if (stricmp(header.mapName, GetMapName()) && mode == 0)
-            {
-                m_badMapName = true;
-
-                sprintf(m_infoBuffer, "%s - hacked waypoint file, fileName doesn't match waypoint header information (mapname: '%s', header: '%s')", GetMapName(), GetMapName(), header.mapName);
-                AddLogEntry(LOG_ERROR, m_infoBuffer);
-
-                fp.Close();
-                return false;
-            }
-            else
-            {
-                Initialize();
-                g_numWaypoints = header.pointNumber;
-
-                for (int i = 0; i < g_numWaypoints; i++)
-                {
-                    m_paths[i] = new Path;
-                    if (m_paths[i] == nullptr)
-                        return false;
-
-                    fp.Read(m_paths[i], sizeof(Path));
-                }
-
                 m_waypointPaths = true;
             }
         }
         else
         {
-           
             sprintf(m_infoBuffer, "%s is not a ebot waypoint file (header found '%s' needed '%s'", GetMapName(), header.header, FH_WAYPOINT);
             AddLogEntry(LOG_ERROR, m_infoBuffer);
             fp.Close();
@@ -1600,7 +1576,7 @@ bool Waypoint::Load(int mode)
         m_waypointDisplayTime[i] = 0.0f;
 
     InitPathMatrix();
-    InitTypes(0);
+    InitTypes();
 
     g_waypointsChanged = false;
     g_killHistory = 0;
@@ -1622,18 +1598,9 @@ void Waypoint::Save(void)
 {
     WaypointHeader header;
 
-    memset(header.header, 0, sizeof(header.header));
-    memset(header.mapName, 0, sizeof(header.mapName));
-    memset(header.author, 0, sizeof(header.author));
-
-    char waypointAuthor[32];
-    sprintf(waypointAuthor, "%s", GetEntityName(g_hostEntity));
-
     strcpy(header.header, FH_WAYPOINT);
-    strcpy(header.author, waypointAuthor);
-    strncpy(header.mapName, GetMapName(), 31);
-
-    header.mapName[31] = 0;
+    strncpy(header.author, GetEntityName(g_hostEntity), sizeof(header.author)-1);
+    strncpy(header.mapName, GetMapName(), sizeof(header.mapName)-1);
     header.fileVersion = FV_WAYPOINT;
     header.pointNumber = g_numWaypoints;
 
@@ -2542,9 +2509,19 @@ void Waypoint::ShowWaypointMsg(void)
         // check if we need to show the cached point index
         if (m_cacheWaypointIndex != -1)
         {
-            length += sprintf(&tempMessage[length], "\n    Cached Waypoint Information:\n\n"
-                "      Waypoint %d of %d, Radius: %.1f\n"
-                "      Flags: %s\n", m_cacheWaypointIndex, g_numWaypoints, m_paths[m_cacheWaypointIndex]->radius, GetWaypointInfo(m_cacheWaypointIndex), (!(m_paths[m_cacheWaypointIndex]->flags & WAYPOINT_HMCAMPMESH) && !(m_paths[m_cacheWaypointIndex]->flags & WAYPOINT_ZMHMCAMP)) ? "" : "Mesh ID: %d", static_cast<int>(m_paths[m_cacheWaypointIndex]->campStartX));
+            if (m_paths[m_cacheWaypointIndex]->flags & (WAYPOINT_ZMHMCAMP | WAYPOINT_HMCAMPMESH))
+            {
+                length += sprintf(&tempMessage[length], "\n    Cached Waypoint Information:\n\n"
+                    "      Waypoint %d of %d, Radius: %.1f\n"
+                    "      Flags: %s\n"
+                    "      Mesh ID : %d\n", m_cacheWaypointIndex, g_numWaypoints, m_paths[m_cacheWaypointIndex]->radius, GetWaypointInfo(m_cacheWaypointIndex), static_cast<int>(m_paths[m_cacheWaypointIndex]->campStartX));
+            }
+            else
+            {
+                length += sprintf(&tempMessage[length], "\n    Cached Waypoint Information:\n\n"
+                    "      Waypoint %d of %d, Radius: %.1f\n"
+                    "      Flags: %s\n", m_cacheWaypointIndex, g_numWaypoints, m_paths[m_cacheWaypointIndex]->radius, GetWaypointInfo(m_cacheWaypointIndex));
+            }
         }
 
         // check if we need to show the facing point index, only if no menu to show
@@ -2759,13 +2736,16 @@ void Waypoint::InitPathMatrix(void)
     int i, j, k;
 
     if (m_distMatrix != nullptr)
-        delete[] (m_distMatrix);
+    {
+        delete[](m_distMatrix);
+        m_distMatrix = nullptr;
+    }
 
     if (m_pathMatrix != nullptr)
+    {
         delete[] m_pathMatrix;
-
-    m_distMatrix = nullptr;
-    m_pathMatrix = nullptr;
+        m_pathMatrix = nullptr;
+    }
 
     m_distMatrix = new int[g_numWaypoints * g_numWaypoints];
     m_pathMatrix = new int[g_numWaypoints * g_numWaypoints];
@@ -2780,8 +2760,13 @@ void Waypoint::InitPathMatrix(void)
     {
         for (j = 0; j < g_numWaypoints; j++)
         {
-            *(m_distMatrix + i * g_numWaypoints + j) = 999999;
-            *(m_pathMatrix + i * g_numWaypoints + j) = -1;
+            if (i == j)
+            {
+                m_distMatrix[(i * g_numWaypoints) + i] = 0;
+                continue;
+            }
+            m_distMatrix[i * g_numWaypoints + j] = 999999;
+            m_pathMatrix[i * g_numWaypoints + j] = -1;
         }
     }
 
@@ -2791,25 +2776,25 @@ void Waypoint::InitPathMatrix(void)
         {
             if (m_paths[i]->index[j] >= 0 && m_paths[i]->index[j] < g_numWaypoints)
             {
-                *(m_distMatrix + (i * g_numWaypoints) + m_paths[i]->index[j]) = m_paths[i]->distances[j];
-                *(m_pathMatrix + (i * g_numWaypoints) + m_paths[i]->index[j]) = m_paths[i]->index[j];
+                m_distMatrix[(i * g_numWaypoints) + m_paths[i]->index[j]] = m_paths[i]->distances[j];
+                m_pathMatrix[(i * g_numWaypoints) + m_paths[i]->index[j]] = m_paths[i]->index[j];
             }
         }
     }
-
-    for (i = 0; i < g_numWaypoints; i++)
-        *(m_distMatrix + (i * g_numWaypoints) + i) = 0;
 
     for (k = 0; k < g_numWaypoints; k++)
     {
         for (i = 0; i < g_numWaypoints; i++)
         {
+            int ik = (i * g_numWaypoints) + k;
             for (j = 0; j < g_numWaypoints; j++)
             {
-                if (*(m_distMatrix + (i * g_numWaypoints) + k) + *(m_distMatrix + (k * g_numWaypoints) + j) < (*(m_distMatrix + (i * g_numWaypoints) + j)))
+                int kj = (k * g_numWaypoints) + j;
+                int ij = (i * g_numWaypoints) + j;
+                if (m_distMatrix[ik] + m_distMatrix[kj] < m_distMatrix[ij])
                 {
-                    *(m_distMatrix + (i * g_numWaypoints) + j) = *(m_distMatrix + (i * g_numWaypoints) + k) + *(m_distMatrix + (k * g_numWaypoints) + j);
-                    *(m_pathMatrix + (i * g_numWaypoints) + j) = *(m_pathMatrix + (i * g_numWaypoints) + k);
+                    m_distMatrix[ij] = m_distMatrix[ik] + m_distMatrix[kj];
+                    m_pathMatrix[ij] = m_pathMatrix[ik];
                 }
             }
         }

@@ -925,7 +925,7 @@ private:
 	bool ItemIsVisible(Vector dest, char* itemName);// , bool bomb = false);
 	bool LastEnemyShootable(void);
 	bool IsBehindSmokeClouds(edict_t* ent);
-	void TaskNormal(int i, int destIndex, Vector src);
+	void TaskNormal(Vector src);
 	void RunTask(void);
 	void CheckTasksPriorities(void);
 	void PushTask(Task* task);
@@ -1363,7 +1363,7 @@ public:
 
 	void Analyze(void);
 	void AnalyzeDeleteUselessWaypoints(void);
-	void InitTypes(int mode);
+	void InitTypes();
 	void AddPath(int addIndex, int pathIndex, float distance, int type = 0);
 
 	int GetFacingIndex(void);
@@ -1459,6 +1459,7 @@ extern float Clamp(float a, float b, float c);
 extern float SquaredF(float a);
 extern float MultiplyFloat(float a, float b);
 extern float AddTime(float time);
+extern float GetTime();
 extern Vector AddVector(Vector a, Vector b);
 extern Vector MultiplyVector(Vector a, Vector b);
 extern int AddInt(float a, float b);

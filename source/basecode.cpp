@@ -1412,7 +1412,8 @@ bool Bot::IsRestricted(int weaponIndex)
 	if (IsNullString(ebot_restrictweapons.GetString()))
 		return IsRestrictedAMX(weaponIndex);
 
-	Array <String> bannedWeapons = String(ebot_restrictweapons.GetString()).Split(';');
+	Array <String> bannedWeapons;
+	String(ebot_restrictweapons.GetString()).Split(';', bannedWeapons);
 
 	ITERATE_ARRAY(bannedWeapons, i)
 	{
@@ -1482,7 +1483,8 @@ bool Bot::IsMorePowerfulWeaponCanBeBought(void)
 	if (UsesBadPrimary())
 		return true;
 
-	Array <String> bannedWeapons = String(ebot_restrictweapons.GetString()).Split(';');
+	Array <String> bannedWeapons;
+	String(ebot_restrictweapons.GetString()).Split(';', bannedWeapons);
 
 	// check if its banned
 	ITERATE_ARRAY(bannedWeapons, i)
@@ -3937,6 +3939,7 @@ void Bot::Think(void)
 				g_lastChatTime = engine->GetTime();
 
 				char* pickedPhrase = g_chatFactory[CHAT_DEAD].GetRandomElement();
+				String pickedPhraseStr(pickedPhrase);
 				bool sayBufferExists = false;
 
 				// search for last messages, sayed
@@ -4064,9 +4067,9 @@ void Bot::CalculatePing(void)
 	int averagePing = 0;
 	int numHumans = 0;
 
-	for (int i = 1; i <= engine->GetMaxClients(); i++)
+	for (int i = 0; i < engine->GetMaxClients(); i++)
 	{
-		edict_t* ent = INDEXENT(i);
+		edict_t* ent = INDEXENT(i+1);
 
 		if (!IsValidPlayer(ent))
 			continue;
@@ -4145,7 +4148,7 @@ void Bot::MoveAction(void)
 	}
 }
 
-void Bot::TaskNormal(int i, int destIndex, Vector src)
+void Bot::TaskNormal(Vector src)
 {
 	m_aimFlags |= AIM_NAVPOINT;
 
@@ -4176,16 +4179,22 @@ void Bot::TaskNormal(int i, int destIndex, Vector src)
 	{
 		int hostageWptIndex = FindHostage();
 
-		if (IsValidWaypoint(hostageWptIndex) && m_currentWaypointIndex != hostageWptIndex)
+		if (IsValidWaypoint(hostageWptIndex) && m_currentWaypointIndex != hostageWptIndex) {
 			GetCurrentTask()->data = hostageWptIndex;
+		}
 		else // no hostage? search goal waypoints
 		{
-			int goalindex = g_waypoint->m_goalPoints.GetRandomElement();
+			int goalindex;
+			try {
+				goalindex = g_waypoint->m_goalPoints.GetRandomElement();
+				if (IsValidWaypoint(goalindex))
+				{
+					if (m_isStuck || m_currentWaypointIndex == goalindex)
+						GetCurrentTask()->data = goalindex;
+				}
+			}
+			catch(std::exception e) {
 
-			if (IsValidWaypoint(goalindex))
-			{
-				if (m_isStuck || m_currentWaypointIndex == goalindex)
-					GetCurrentTask()->data = goalindex;
 			}
 		}
 	}
@@ -4359,7 +4368,7 @@ void Bot::TaskNormal(int i, int destIndex, Vector src)
 						// and reached a Rescue Point?
 						if (g_waypoint->GetPath(m_currentWaypointIndex)->flags & WAYPOINT_RESCUE)
 						{
-							for (i = 0; i < Const_MaxHostages; i++)
+							for (int i = 0; i < Const_MaxHostages; i++)
 							{
 								if (FNullEnt(m_hostages[i]))
 									continue;
@@ -4410,7 +4419,7 @@ void Bot::TaskNormal(int i, int destIndex, Vector src)
 		m_moveSpeed = pev->maxspeed;
 
 		DeleteSearchNodes();
-
+		int destIndex;
 		// did we already decide about a goal before?
 		if (IsValidWaypoint(GetCurrentTask()->data) && !m_isBomber)
 			destIndex = m_tasks->data;
@@ -4468,7 +4477,7 @@ void Bot::TaskNormal(int i, int destIndex, Vector src)
 // this is core function that handle task execution
 void Bot::RunTask(void)
 {
-	int destIndex, i;
+	int destIndex;
 	Vector src, destination;
 	TraceResult tr;
 
@@ -4480,7 +4489,7 @@ void Bot::RunTask(void)
 	{
 		// normal task
 	case TASK_NORMAL:
-		TaskNormal(destIndex, i, src);
+		TaskNormal(src);
 		break;
 		// bot sprays messy logos all over the place...
 	case TASK_SPRAYLOGO:
@@ -4683,7 +4692,7 @@ void Bot::RunTask(void)
 	case TASK_FIGHTENEMY:
 		if (IsZombieMode() && !m_isZombieBot)
 		{
-			TaskNormal(i, destIndex, src);
+			TaskNormal(src);
 			return;
 		}
 
@@ -4935,8 +4944,7 @@ void Bot::RunTask(void)
 				{
 					for (int i = 0; i <= g_waypoint->m_hmMeshPoints.GetElementNumber(); i++)
 					{
-						int index;
-						g_waypoint->m_hmMeshPoints.GetAt(i, index);
+						int index = g_waypoint->m_hmMeshPoints.GetAt(i);
 
 						if (g_waypoint->GetPath(index)->campStartX == 0.0f)
 							continue;
@@ -5007,7 +5015,7 @@ void Bot::RunTask(void)
 
 				Vector dotA = (destination - pev->origin).Normalize2D();
 
-				for (i = 0; i < g_numWaypoints; i++)
+				for (int i = 0; i < g_numWaypoints; i++)
 				{
 					// skip invisible waypoints or current waypoint
 					if (i == m_currentWaypointIndex || g_waypoint->IsVisible(m_currentWaypointIndex, i))
@@ -5920,7 +5928,7 @@ void Bot::RunTask(void)
 			DeleteSearchNodes();
 
 			float safeRadius = 2048.0f, minPathDistance = 4096.0f;
-			for (i = 0; i < g_numWaypoints; i++)
+			for (int i = 0; i < g_numWaypoints; i++)
 			{
 				if ((g_waypoint->GetPath(i)->origin - g_waypoint->GetBombPosition()).GetLength() < safeRadius)
 					continue;
@@ -6029,6 +6037,7 @@ void Bot::RunTask(void)
 			// near to weapon?
 			if (itemDistance < 60)
 			{
+				int i;
 				for (i = 0; i < 7; i++)
 				{
 					if (strcmp(g_weaponSelect[i].modelName, STRING(m_pickupItem->v.model) + 9) == 0)
@@ -6155,7 +6164,7 @@ void Bot::RunTask(void)
 				// use game dll function to make sure the hostage is correctly 'used'
 				MDLL_Use(m_pickupItem, GetEntity());
 
-				for (i = 0; i < Const_MaxHostages; i++)
+				for (int i = 0; i < Const_MaxHostages; i++)
 				{
 					if (FNullEnt(m_hostages[i])) // store pointer to hostage so other bots don't steal from this one or bot tries to reuse it
 					{
@@ -7512,7 +7521,7 @@ bool Bot::IsBombDefusing(Vector bombOrigin)
 		return false;
 
 	bool defusingInProgress = false;
-	constexpr float distanceToBomb = 75.0f;
+	const float distanceToBomb = 75.0f;
 
 	for (const auto& client : g_clients)
 	{

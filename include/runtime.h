@@ -460,6 +460,11 @@ public:
         return Vector(right.x * vec, right.y * vec, right.z * vec);
     }
 
+    friend inline const Vector operator * (const Vector& left, const Vector& right)
+    {
+        return Vector(left.x * right.x, left.y * right.y, left.z * right.z);
+    }
+
     inline const Vector operator * (float vec) const
     {
         return Vector(vec * x, vec * y, vec * z);
@@ -859,13 +864,7 @@ public:
     // Parameters:
     //  resizeStep - Array resize step, when new items added, or old deleted.
     //
-    Array(int resizeStep = 0)
-    {
-        m_elements = nullptr;
-        m_itemSize = 0;
-        m_itemCount = 0;
-        m_resizeStep = resizeStep;
-    }
+    Array(int resizeStep = 0) : m_elements(nullptr), m_resizeStep(resizeStep), m_itemSize(0), m_itemCount(0) {}
 
     //
     // Function: Array
@@ -876,11 +875,6 @@ public:
     //
     Array(const Array <T>& other)
     {
-        m_elements = nullptr;
-        m_itemSize = 0;
-        m_itemCount = 0;
-        m_resizeStep = 0;
-
         AssignFrom(other);
     }
 
@@ -904,10 +898,11 @@ public:
     //
     void Destory(void)
     {
-        delete[] m_elements;
-        m_elements = nullptr;
-        m_itemSize = 0;
-        m_itemCount = 0;
+        m_resizeStep = m_itemSize = m_itemCount = 0;
+        if (m_elements != nullptr) {
+            delete[] m_elements;
+            m_elements = nullptr;
+        }
     }
 
     //
@@ -921,7 +916,7 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool SetSize(int newSize, bool keepData = true)
+    bool SetSize(int newSize)
     {
         if (newSize == 0)
         {
@@ -929,40 +924,34 @@ public:
             return true;
         }
 
-        int checkSize = 0;
+        int allocateSize;
 
-        if (m_resizeStep != 0)
-            checkSize = m_itemCount + m_resizeStep;
-        else
-        {
-            checkSize = m_itemCount / 8;
-
-            if (checkSize < 4)
-                checkSize = 4;
-            else if (checkSize > 1024)
-                checkSize = 1024;
-
-            checkSize += m_itemCount;
+        if (newSize >= m_itemSize && m_resizeStep) {
+            int moreSize = newSize - m_itemSize;
+            allocateSize = m_itemSize + ((moreSize + m_resizeStep - 1) / m_resizeStep) * m_resizeStep;
+        }
+        else {
+            allocateSize = newSize;
         }
 
-        if (newSize > checkSize)
-            checkSize = newSize;
-
-        T* buffer = new T[checkSize];
-
-        if (keepData && m_elements != nullptr)
+        T* allocateBuffer = new T[allocateSize];
+        if (allocateBuffer == nullptr)
         {
-            if (checkSize < m_itemCount)
-                m_itemCount = checkSize;
+            return false;
+        }
 
+        if (m_elements != nullptr)
+        {
             for (int i = 0; i < m_itemCount; i++)
-                buffer[i] = m_elements[i];
+                allocateBuffer[i] = m_elements[i];
+            delete[] m_elements;
         }
 
-        delete[] m_elements;
-
-        m_elements = buffer;
-        m_itemSize = checkSize;
+        m_elements = allocateBuffer;
+        if (m_itemSize >= allocateSize) {
+            m_itemCount = allocateSize;
+        }
+        m_itemSize = allocateSize;
 
         return true;
     }
@@ -1027,55 +1016,18 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool SetAt(int index, T object, bool enlarge = true)
+    void SetAt(int index, T object)
     {
         if (index >= m_itemSize)
         {
-            if (!enlarge || !SetSize(index + 1))
-                return false;
+            throw std::runtime_error("Set item size larger than capacity.");
         }
 
+        if (index >= m_itemCount)
+        {
+            throw std::runtime_error("Set item index larger than count.");
+        }
         m_elements[index] = object;
-
-        if (index >= m_itemCount)
-            m_itemCount = index + 1;
-
-        return true;
-    }
-
-    //
-    // Function: GetAt
-    //  Gets element from specified index
-    //
-    // Parameters:
-    //  index - Element index to retrieve.
-    //
-    // Returns:
-    //  Element object.
-    //
-    T& GetAt(int index)
-    {
-        return m_elements[index];
-    }
-
-    //
-    // Function: GetAt
-    //  Gets element at specified index, and store it in reference object.
-    //
-    // Parameters:
-    //  index - Element index to retrieve.
-    //  object - Holder for element reference.
-    //
-    // Returns:
-    //  True if operation succeeded, false otherwise.
-    //
-    bool GetAt(int index, T& object)
-    {
-        if (index >= m_itemCount)
-            return false;
-
-        object = m_elements[index];
-        return true;
     }
 
     //
@@ -1090,9 +1042,9 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool InsertAt(int index, T object, bool enlarge = true)
+    bool InsertAt(int index, T object)
     {
-        return InsertAt(index, &object, 1, enlarge);
+        return InsertAt(index, &object, 1);
     }
 
     //
@@ -1108,42 +1060,47 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool InsertAt(int index, T* objects, int count = 1, bool enlarge = true)
+    bool InsertAt(int index, T* objects, int count = 1)
     {
         if (objects == nullptr || count < 1)
             return false;
 
-        int newSize = 0;
+        int newCount = 0;
 
-        if (m_itemCount > index)
-            newSize = m_itemCount + count;
-        else
-            newSize = index + count;
+        if (index < m_itemCount) {
+            newCount = m_itemCount + count;
+        }
+        else {
+            newCount = index + count;
+        }
 
-        if (newSize >= m_itemSize)
+        if (newCount >= m_itemSize)
         {
-            if (!enlarge || !SetSize(newSize))
-                return false;
+            SetSize(newCount);
+        }
+
+        if (index > m_itemCount) {
+            index = m_itemCount;
         }
 
         if (index >= m_itemCount)
         {
             for (int i = 0; i < count; i++)
-                m_elements[i + index] = objects[i];
+                m_elements[index + i] = objects[i];
 
-            m_itemCount = newSize;
+            m_itemCount = newCount;
         }
         else
         {
             int i = 0;
 
-            for (i = m_itemCount; i > index; i--)
-                m_elements[i + count - 1] = m_elements[i - 1];
+            for (i = newCount-1; i >= index+count; i--)
+                m_elements[i] = m_elements[i - count];
 
             for (i = 0; i < count; i++)
                 m_elements[i + index] = objects[i];
 
-            m_itemCount += count;
+            m_itemCount = newCount;
         }
         return true;
     }
@@ -1161,12 +1118,12 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool InsertAt(int index, Array <T>& other, bool enlarge = true)
+    bool InsertAt(int index, Array <T>& other)
     {
         if (&other == this)
             return false;
 
-        return InsertAt(index, other.m_elements, other.m_itemCount, enlarge);
+        return InsertAt(index, other.m_elements, other.m_itemCount);
     }
 
     //
@@ -1207,9 +1164,9 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool Push(T object, bool enlarge = true)
+    bool Push(T object)
     {
-        return InsertAt(m_itemCount, &object, 1, enlarge);
+        return InsertAt(m_itemCount, &object, 1);
     }
 
     //
@@ -1224,9 +1181,9 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool Push(T* objects, int count = 1, bool enlarge = true)
+    bool Push(T* objects, int count = 1)
     {
-        return InsertAt(m_itemCount, objects, count, enlarge);
+        return InsertAt(m_itemCount, objects, count);
     }
 
     //
@@ -1241,12 +1198,12 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool Push(Array <T>& other, bool enlarge = true)
+    bool Push(Array <T>& other)
     {
         if (&other == this)
             return false;
 
-        return InsertAt(m_itemCount, other.m_elements, other.m_itemCount, enlarge);
+        return InsertAt(m_itemCount, other.m_elements, other.m_itemCount);
     }
 
     //
@@ -1267,7 +1224,6 @@ public:
     // 
     void RemoveAll(void)
     {
-        m_itemCount = 0;
         SetSize(m_itemCount);
     }
 
@@ -1303,9 +1259,8 @@ public:
         {
             for (int i = 0; i < m_itemCount; i++)
                 buffer[i] = m_elements[i];
+            delete[] m_elements;
         }
-
-        delete[] m_elements;
 
         m_elements = buffer;
         m_itemSize = m_itemCount;
@@ -1332,7 +1287,6 @@ public:
     //
     T PopNoReturn(void)
     {
-        T element = m_elements[m_itemCount - 1];
         RemoveAt(m_itemCount - 1);
     }
 
@@ -1361,21 +1315,29 @@ public:
     // Returns:
     //  True if operation succeeded, false otherwise.
     //
-    bool AssignFrom(const Array <T>& other)
-    {
-        if (&other == this)
-            return true;
+    void AssignFrom(const Array <T>& other) {
+        if (this != &other) {
+            T* newElements = new T[other.m_itemSize];
+            if (newElements) {
+                m_resizeStep = other.m_resizeStep;
+                m_itemSize = other.m_itemSize;
+                m_itemCount = other.m_itemCount;
+                if (m_elements != nullptr) {
+                    delete[] m_elements;
+                }
+                m_elements = newElements;
+                for (int i = 0; i < m_itemSize; ++i) {
+                    m_elements[i] = other.m_elements[i];
+                }
+            }
+        }
+    }
 
-        if (!SetSize(other.m_itemCount, false))
-            return false;
-
-        for (int i = 0; i < other.m_itemCount; i++)
-            m_elements[i] = other.m_elements[i];
-
-        m_itemCount = other.m_itemCount;
-        m_resizeStep = other.m_resizeStep;
-
-        return true;
+    inline T GetAt(int index) {
+        if (index >= m_itemCount) {
+            throw std::runtime_error("Index out of bound.");
+        }
+        return m_elements[index];
     }
 
     //
@@ -1387,10 +1349,14 @@ public:
     //
     T& GetRandomElement(void) const
     {
-        return m_elements[(*g_engfuncs.pfnRandomLong) (0, m_itemCount - 1)];
+        if (m_itemCount <= 0) {
+            throw std::runtime_error("No any elements exist.\n");
+        }
+        int randomIndex = (*g_engfuncs.pfnRandomLong) (0, m_itemCount - 1);
+        return m_elements[randomIndex];
     }
 
-    Array <T>& operator = (const Array <T>& other)
+    Array <T>& operator =(const Array <T>& other)
     {
         AssignFrom(other);
         return *this;
@@ -1398,10 +1364,9 @@ public:
 
     T& operator [] (int index)
     {
-        if (index < m_itemSize && index >= m_itemCount)
-            m_itemCount = index + 1;
-
-        return GetAt(index);
+        if (index >= m_itemCount)
+            throw std::runtime_error("Get index out of count.");
+        return m_elements[index];
     }
 };
 
@@ -3138,9 +3103,8 @@ public:
     // See Also:
     //  <Array>
     //
-    Array <String> Split(const char* separator)
+    void Split(const char* separator, Array<String>& targets)
     {
-        Array <String> holder;
         int tokenLength, index = 0;
 
         do
@@ -3149,36 +3113,22 @@ public:
             tokenLength = strcspn(&m_bufferPtr[index], separator);
 
             if (tokenLength > 0)
-                holder.Push(Mid(index, tokenLength));
+                targets.Push(Mid(index, tokenLength));
 
             index += tokenLength;
 
         } while (tokenLength > 0);
 
-        return holder;
     }
 
-    //
-    // Function: Split
-    //  Splits string using character.
-    //
-    // Parameters:
-    //  separator - Separator to split with.
-    //
-    // Returns:
-    //  Array of slitted strings.
-    //
-    // See Also:
-    //  <Array>
-    //
-    Array <String> Split(char separator)
+    void Split(char separator, Array<String> &targets)
     {
         char sep[2];
 
         sep[0] = separator;
         sep[1] = 0x0;
 
-        return Split(sep);
+        return Split(sep, targets);
     }
 };
 

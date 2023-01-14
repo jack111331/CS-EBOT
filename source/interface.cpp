@@ -751,7 +751,12 @@ void InitConfig(void)
 	int chatType = -1;
 
 	// fixes for crashing if configs couldn't be accessed
+	g_chatFactory.Destory();
 	g_chatFactory.SetSize(CHAT_NUM);
+	for (int i = 0; i < CHAT_NUM; ++i) 
+	{
+		g_chatFactory.Push(new Array<String>());
+	}
 
 	#define SKIP_COMMENTS() if ((line[0] == '/') || (line[0] == '\r') || (line[0] == '\n') || (line[0] == 0) || (line[0] == ' ') || (line[0] == '\t')) continue;
 
@@ -861,7 +866,8 @@ void InitConfig(void)
 					}
 
 					replyKey.keywords.RemoveAll();
-					replyKey.keywords = String(&line[4]).Split(',');
+					Array<String> allKeywords;
+					String(&line[4]).Split(',', allKeywords);
 
 					ITERATE_ARRAY(replyKey.keywords, i)
 						replyKey.keywords[i].Trim().TrimQuotes();
@@ -903,7 +909,8 @@ void InitConfig(void)
 		{
 			SKIP_COMMENTS();
 
-			Array <String> pair = String(line).Split('=');
+			Array <String> pair;
+			String(line).Split('=', pair);
 
 			if (pair.GetElementNumber() != 2)
 				continue;
@@ -911,7 +918,8 @@ void InitConfig(void)
 			pair[0].Trim().Trim();
 			pair[1].Trim().Trim();
 
-			Array <String> splitted = pair[1].Split(',');
+			Array <String> splitted;
+			pair[1].Split(',', splitted);
 
 			if (pair[0] == "MapStandard")
 			{
@@ -1702,11 +1710,10 @@ void ClientCommand(edict_t* ent)
 					break;
 
 				case 8:
-					ServerCommand("ebot wp noclip");
-					break;
-
-				case 9:
 					DisplayMenuToClient(ent, &g_menus[9]);
+					break;
+				case 9:
+					DisplayMenuToClient(ent, &g_menus[28]);
 					break;
 				}
 				if (g_isMetamod)
@@ -2464,6 +2471,41 @@ void ClientCommand(edict_t* ent)
 
 				return;
 			}
+			else if (client->menu == &g_menus[28])
+			{
+				DisplayMenuToClient(ent, nullptr); // reset menu display
+
+				switch (selection)
+				{
+				case 1:
+					ServerCommand("ebot wp noclip");
+					break;
+				case 2:
+					if (g_waypoint->NodesValid())
+						g_waypoint->Save();
+					else
+						CenterPrint("Waypoint not saved\nThere are errors, see console");
+					g_waypoint->Load();
+					g_waypoint->SgdWp_Set("off");
+					break;
+				case 3:
+					g_waypoint->Save();
+					g_waypoint->Load();
+					g_waypoint->SgdWp_Set("off");
+					break;
+				case 4:
+				case 5:
+				case 6:
+				case 7:
+				case 8:
+					DisplayMenuToClient(ent, &g_menus[10]);
+					break;
+				}
+				if (g_isMetamod)
+					RETURN_META(MRES_SUPERCEDE);
+
+				return;
+			}
 		}
 	}
 
@@ -2637,10 +2679,10 @@ void LoadEntityData(void)
 			SetEntityWaypoint(entity);
 	}
 
-	for (i = 1; i <= engine->GetMaxClients(); i++)
+	for (i = 0; i < engine->GetMaxClients(); i++)
 	{
-		entity = INDEXENT(i);
-
+		entity = INDEXENT(i+1);
+		// although start from 1, engine->GetMaxClients is 32 size and g_clients's size is 32, which index should only be in 0~31
 		if (FNullEnt(entity) || !(entity->v.flags & FL_CLIENT))
 		{
 			g_clients[i].flags &= ~(CFLAG_USED | CFLAG_ALIVE);
@@ -2764,9 +2806,9 @@ void JustAStuff(void)
 	int i;
 	if (IsDedicatedServer())
 	{
-		for (i = 1; i <= engine->GetMaxClients(); i++)
+		for (i = 0; i < engine->GetMaxClients(); i++)
 		{
-			edict_t* player = INDEXENT(i);
+			edict_t* player = INDEXENT(i+1);
 
 			// code below is executed only on dedicated server
 			if (!FNullEnt(player) && (player->v.flags & FL_CLIENT) && !(player->v.flags & FL_FAKECLIENT))

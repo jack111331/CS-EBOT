@@ -261,7 +261,7 @@ FireDelay g_fireDelay[Const_NumWeapons + 1] =
 };
 
 // bot menus
-MenuText g_menus[28] =
+MenuText g_menus[29] =
 {
 	// main menu
 	{
@@ -397,10 +397,11 @@ MenuText g_menus[28] =
 		"5. Save without checking\v"
 		"6. Load waypoints\v"
 		"7. Check waypoints\v"
-		"8. Noclip cheat on/off\v\v"
-		"9. Previous...\v\v"
+		"8. Previous...\v"
+		"9. Next...\v\v"
 		"0. Exit"
 	},
+
 
 	// select waypoint radius menu
 	{
@@ -599,5 +600,23 @@ MenuText g_menus[28] =
 		"8. Previous...\v"
 		"9. Next...\v\v"
 		"0. Exit"
-	}
+	},
+
+	// main waypoint menu (page 3)
+	{
+		0x3ff,
+		"\\yWaypoint Operations (Page 2/2)\\w\v\v"
+		"1. Noclip cheat on/off\v\v"
+		"2. Save waypoints and load\v"
+		"3. Save without checking and load\v"
+		"\v"
+		"\v"
+		"\v"
+		"\v"
+		"\v"
+		"9. Previous...\v\v"
+		"0. Exit"
+	},
+
+
 };

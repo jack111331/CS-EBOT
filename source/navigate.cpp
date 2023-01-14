@@ -51,8 +51,7 @@ int Bot::FindGoal(void)
 			Array <int> Important;
 			for (int i = 0; i <= g_waypoint->m_terrorPoints.GetElementNumber(); i++)
 			{
-				int index;
-				g_waypoint->m_terrorPoints.GetAt(i, index);
+				int index = g_waypoint->m_terrorPoints.GetAt(i);
 				Important.Push(index);
 			}
 
@@ -62,21 +61,10 @@ int Bot::FindGoal(void)
 		else if (IsValidWaypoint(m_myMeshWaypoint))
 			return m_chosenGoalIndex = m_myMeshWaypoint;
 		
-		if (!g_waypoint->m_zmHmPoints.IsEmpty())
+		if (g_waypoint->m_zmHmPoints.IsEmpty())
 		{
-			Array <int> ZombieWaypoints;
-			for (int i = 0; i <= g_waypoint->m_zmHmPoints.GetElementNumber(); i++)
-			{
-				int index;
-				g_waypoint->m_zmHmPoints.GetAt(i, index);
-				ZombieWaypoints.Push(index);
-			}
-
-			if (!ZombieWaypoints.IsEmpty())
-				return m_chosenGoalIndex = ZombieWaypoints.GetRandomElement();
-		}
-		else
 			return m_chosenGoalIndex = engine->RandomInt(0, g_numWaypoints - 1);
+		}
 	}
 
 	// force bot move to bomb
@@ -1762,8 +1750,7 @@ int Bot::FindDefendWaypoint(Vector origin)
 
 	for (int i = 0; i < g_waypoint->m_campPoints.GetElementNumber(); i++)
 	{
-		int index = -1;
-		g_waypoint->m_campPoints.GetAt(i, index);
+		int index = g_waypoint->m_campPoints.GetAt(i);
 
 		if (!IsValidWaypoint(index))
 			continue;
@@ -3307,9 +3294,9 @@ bool Bot::IsWaypointOccupied(int index)
 	if (IsAntiBlock(GetEntity()))
 		return false;
 
-	for (int i = 1; i <= engine->GetMaxClients(); i++)
+	for (int i = 0; i < engine->GetMaxClients(); i++)
 	{
-		edict_t* player = INDEXENT(i);
+		edict_t* player = INDEXENT(i+1);
 		if (!IsAlive(player) || player == GetEntity())
 			continue;
 

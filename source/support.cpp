@@ -213,6 +213,15 @@ Vector GetNearestWalkablePosition(const Vector& origin, edict_t* ent, bool retur
 	return BestOrigin;
 }
 
+// this expanded function set the vector origin of a bounded entity
+void SetEntityOrigin(edict_t* ent, const Vector &Target)
+{
+	if (FNullEnt(ent))
+		return;
+
+	ent->v.origin = Target;
+}
+
 // this expanded function returns the vector origin of a bounded entity, assuming that any
 // entity that has a bounding box has its center at the center of the bounding box itself.
 Vector GetEntityOrigin(edict_t* ent)
@@ -346,7 +355,9 @@ void DecalTrace(entvars_t* pev, TraceResult* trace, int logotypeIndex)
 	static Array <String> logotypes;
 
 	if (logotypes.IsEmpty())
-		logotypes = String("{biohaz;{graf004;{graf005;{lambda06;{target;{hand1").Split(";");
+	{
+		String("{biohaz;{graf004;{graf005;{lambda06;{target;{hand1").Split(";", logotypes);
+	}
 
 	int entityIndex = -1, message = TE_DECAL;
 	int decalIndex = (*g_engfuncs.pfnDecalIndex) (logotypes[logotypeIndex]);
@@ -684,6 +695,7 @@ void RoundInit(void)
 {
 	g_roundEnded = false;
 	g_audioTime = 0.0f;
+	g_botManager->InitQuota();
 
 	if (GetGameMode() == MODE_BASE)
 	{
@@ -702,8 +714,6 @@ void RoundInit(void)
 
 	g_waypoint->SetBombPosition(true);
 	g_waypoint->ClearGoalScore();
-
-	g_waypoint->InitTypes(1);
 
 	g_bombSayString = false;
 	g_timeBombPlanted = 0.0f;
@@ -813,10 +823,11 @@ void AutoLoadGameMode(void)
 		"plugins-zp", // ZP
 		"plugins-zescape", // ZE
 		"plugins-escape", // ZE
-		"plugins-plague" // ZP
+		"plugins-plague", // ZP
+		"plugins-zh" // ZP
 	};
 
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < sizeof(zpGameVersion); i++)
 	{
 		Plugin_INI = FormatBuffer("%s/addons/amxmodx/configs/%s.ini", GetModName(), zpGameVersion[i]);
 		if (TryFileOpen(Plugin_INI))
@@ -1084,6 +1095,11 @@ float AddTime(float a)
 #else
 	return g_pGlobals->time + a;
 #endif
+}
+
+float GetTime()
+{
+	return g_pGlobals->time;
 }
 
 Vector AddVector(Vector a, Vector b)
