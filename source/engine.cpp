@@ -26,7 +26,7 @@
 
 ConVar::ConVar(const char* name, const char* initval, VarType type)
 {
-    engine->RegisterVariable(name, initval, type, this);
+    Engine::GetReference()->RegisterVariable(name, initval, type, this);
 }
 
 float Engine::RandomFloat(float low, float high)
@@ -406,14 +406,14 @@ void Engine::IssueBotCommand(edict_t* ent, const char* fmt, ...)
 //////////////////////////////////////////////////////////////////////////
 float Client::GetShootingConeDeviation(const Vector& pos) const
 {
-    engine->BuildGlobalVectors(GetViewAngles());
+    Engine::GetReference()->BuildGlobalVectors(GetViewAngles());
 
     return g_pGlobals->v_forward | (pos - GetHeadOrigin()).Normalize();
 }
 
 bool Client::IsInViewCone(const Vector& pos) const
 {
-    engine->BuildGlobalVectors(GetViewAngles());
+    Engine::GetReference()->BuildGlobalVectors(GetViewAngles());
     return ((pos - GetHeadOrigin()).Normalize() | g_pGlobals->v_forward) >= cosf(Math::DegreeToRadian((GetFOV() > 0.0f ? GetFOV() : 90.0f) * 0.5f));
 }
 

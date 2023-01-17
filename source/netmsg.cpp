@@ -162,7 +162,7 @@ void NetworkMsg::Execute(void* p)
 
                 // ammo amount decreased ? must have fired a bullet...
                 if (id == m_bot->m_currentWeapon && m_bot->m_ammoInClip[id] > clip)
-                    m_bot->m_timeLastFired = engine->GetTime(); // remember the last bullet time
+                    m_bot->m_timeLastFired = Engine::GetReference()->GetTime(); // remember the last bullet time
 
                 m_bot->m_ammoInClip[id] = clip;
             }
@@ -355,9 +355,9 @@ void NetworkMsg::Execute(void* p)
             {
                 g_bombPlanted = true;
                 g_bombSayString = true;
-                g_timeBombPlanted = engine->GetTime();
+                g_timeBombPlanted = Engine::GetReference()->GetTime();
 
-                for (int i = 0; i < engine->GetMaxClients(); i++)
+                for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
                 {
                     Bot* bot = g_botManager->GetBot(i);
 

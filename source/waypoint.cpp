@@ -59,9 +59,9 @@ void AnalyzeThread(void)
             float ran = ebot_analyze_distance.GetFloat();
 
             Vector Start;
-            Start.x = AddFloat(WayVec.x, engine->RandomFloat(((-ran) - 5.0f), AddFloat(ran, 5.0f)));
-            Start.y = AddFloat(WayVec.y, engine->RandomFloat(((-ran) - 5.0f), AddFloat(ran, 5.0f)));
-            Start.z = AddFloat(WayVec.z, engine->RandomFloat(1, ran));
+            Start.x = AddFloat(WayVec.x, Engine::GetReference()->RandomFloat(((-ran) - 5.0f), AddFloat(ran, 5.0f)));
+            Start.y = AddFloat(WayVec.y, Engine::GetReference()->RandomFloat(((-ran) - 5.0f), AddFloat(ran, 5.0f)));
+            Start.z = AddFloat(WayVec.z, Engine::GetReference()->RandomFloat(1, ran));
 
             TraceResult tr;
             TraceResult tr2;
@@ -98,7 +98,7 @@ void AnalyzeThread(void)
 
                                 if (g_waypoint->IsNodeReachable(g_waypoint->GetPath(g_waypoint->FindNearest(TargetPosition, 250.0f))->origin, TargetPosition) && g_waypoint->IsNodeReachable(TargetPosition, g_waypoint->GetPath(g_waypoint->FindNearest(TargetPosition, 250.0f))->origin) && vis.flFraction == 1.0f && (TargetPosition - GetEntityOrigin(ent)).GetLength() <= ebot_analyze_goal_check_distance.GetFloat())
                                 {
-                                    lastwaypointaddtime = engine->GetTime();
+                                    lastwaypointaddtime = Engine::GetReference()->GetTime();
                                     g_waypoint->Add(100, TargetPosition);
                                 }
                             }
@@ -110,7 +110,7 @@ void AnalyzeThread(void)
 
                                 if (g_waypoint->IsNodeReachable(g_waypoint->GetPath(g_waypoint->FindNearest(TargetPosition, 250.0f))->origin, TargetPosition) && g_waypoint->IsNodeReachable(TargetPosition, g_waypoint->GetPath(g_waypoint->FindNearest(TargetPosition, 250.0f))->origin) && vis.flFraction == 1.0f && (TargetPosition - GetEntityOrigin(ent)).GetLength() <= ebot_analyze_goal_check_distance.GetFloat())
                                 {
-                                    lastwaypointaddtime = engine->GetTime();
+                                    lastwaypointaddtime = Engine::GetReference()->GetTime();
                                     g_waypoint->Add(100, TargetPosition);
                                 }
                             }
@@ -122,7 +122,7 @@ void AnalyzeThread(void)
 
                                 if (g_waypoint->IsNodeReachable(g_waypoint->GetPath(g_waypoint->FindNearest(TargetPosition, 250.0f))->origin, TargetPosition) && g_waypoint->IsNodeReachable(TargetPosition, g_waypoint->GetPath(g_waypoint->FindNearest(TargetPosition, 250.0f))->origin) && vis.flFraction == 1.0f && (TargetPosition - GetEntityOrigin(ent)).GetLength() <= ebot_analyze_goal_check_distance.GetFloat())
                                 {
-                                    lastwaypointaddtime = engine->GetTime();
+                                    lastwaypointaddtime = Engine::GetReference()->GetTime();
                                     g_waypoint->Add(100, TargetPosition);
                                 }
                             }
@@ -139,7 +139,7 @@ void AnalyzeThread(void)
                                 if (upcheck.flFraction != 1.0f)
                                     g_analyzeputrequirescrouch = true;
 
-                                lastwaypointaddtime = engine->GetTime();
+                                lastwaypointaddtime = Engine::GetReference()->GetTime();
 
                                 if ((g_waypoint->IsNodeReachable(g_waypoint->GetPath(g_waypoint->FindNearest(TargetPosition, 250.0f))->origin, g_analyzeputrequirescrouch ? Vector(TargetPosition.x, TargetPosition.y, (TargetPosition.z - 18.0f)) : TargetPosition) &&
                                     g_waypoint->IsNodeReachable(g_analyzeputrequirescrouch ? Vector(TargetPosition.x, TargetPosition.y, (TargetPosition.z - 18.0f)) : TargetPosition, g_waypoint->GetPath(g_waypoint->FindNearest(TargetPosition, 250.0f))->origin))
@@ -153,7 +153,7 @@ void AnalyzeThread(void)
 
             if (tr2.flFraction != 1.0f)
             {
-                if (ebot_analyze_create_camp_waypoints.GetInt() == 1 && lastwaypointaddtime + 0.1f < engine->GetTime()) // delay it for save performance
+                if (ebot_analyze_create_camp_waypoints.GetInt() == 1 && lastwaypointaddtime + 0.1f < Engine::GetReference()->GetTime()) // delay it for save performance
                 {
                     int campindex = g_waypoint->FindNearest(tr2.vecEndPos, ran);
 
@@ -740,6 +740,10 @@ void Waypoint::Add(int flags, Vector waypointOrigin)
 
         index = g_numWaypoints;
 
+        if (m_paths[index] != nullptr)
+        {
+            delete m_paths[index];
+        }
         m_paths[index] = new Path;
         if (m_paths[index] == nullptr)
             return;
@@ -2073,7 +2077,7 @@ void Waypoint::Think(void)
             if (g_hostEntity->v.button & IN_JUMP)
             {
                 Add(9);
-                m_timeJumpStarted = engine->GetTime();
+                m_timeJumpStarted = Engine::GetReference()->GetTime();
                 m_endJumpPoint = true;
             }
             else
@@ -2082,7 +2086,7 @@ void Waypoint::Think(void)
                 m_learnPosition = GetEntityOrigin(g_hostEntity);
             }
         }
-        else if (((g_hostEntity->v.flags & FL_ONGROUND) || g_hostEntity->v.movetype == MOVETYPE_FLY) && m_timeJumpStarted + 0.1 < engine->GetTime())
+        else if (((g_hostEntity->v.flags & FL_ONGROUND) || g_hostEntity->v.movetype == MOVETYPE_FLY) && m_timeJumpStarted + 0.1 < Engine::GetReference()->GetTime())
         {
             Add(10);
 
@@ -2101,8 +2105,8 @@ void Waypoint::Think(void)
         if (g_hostEntity->v.button & IN_USE && (g_hostEntity->v.flags & FL_ONGROUND))
         {
             if (m_timeGetProTarGet == 0.0f)
-                m_timeGetProTarGet = engine->GetTime();
-            else if (m_timeGetProTarGet + 1.0 < engine->GetTime())
+                m_timeGetProTarGet = Engine::GetReference()->GetTime();
+            else if (m_timeGetProTarGet + 1.0 < Engine::GetReference()->GetTime())
             {
                 DisplayMenuToClient(g_hostEntity, &g_menus[21]);
                 m_timeGetProTarGet = 0.0f;
@@ -2164,8 +2168,8 @@ void Waypoint::Think(void)
                 if (g_hostEntity->v.button & IN_DUCK)
                 {
                     if (m_timeCampWaypoint == 0.0f)
-                        m_timeCampWaypoint = engine->GetTime();
-                    else if (m_timeCampWaypoint + 2.5 < engine->GetTime())
+                        m_timeCampWaypoint = Engine::GetReference()->GetTime();
+                    else if (m_timeCampWaypoint + 2.5 < Engine::GetReference()->GetTime())
                     {
                         m_timeCampWaypoint = 0.0f;
                         DisplayMenuToClient(g_hostEntity, &g_menus[22]);
@@ -2283,11 +2287,11 @@ void Waypoint::ShowWaypointMsg(void)
                     const Vector& dest = m_paths[x]->origin + Vector(0, 0, (m_paths[x]->flags & WAYPOINT_CROUCH) ? 9.0f : 18.0f);
 
                     // draw links
-                    engine->DrawLine(g_hostEntity, src, dest, Color(0, 0, 255, 255), 5, 0, 0, 10);
+                    Engine::GetReference()->DrawLine(g_hostEntity, src, dest, Color(0, 0, 255, 255), 5, 0, 0, 10);
                 }
             }
 
-            if (m_waypointDisplayTime[i] + 1.0f < engine->GetTime())
+            if (m_waypointDisplayTime[i] + 1.0f < Engine::GetReference()->GetTime())
             {
                 float nodeHeight = (m_paths[i]->flags & WAYPOINT_CROUCH) ? 36.0f : 72.0f; // check the node height
                 float nodeHalfHeight = nodeHeight * 0.5f;
@@ -2361,11 +2365,11 @@ void Waypoint::ShowWaypointMsg(void)
 
                 // draw node without additional flags
                 if (nodeFlagColor.red == -1)
-                    engine->DrawLine(g_hostEntity, m_paths[i]->origin - Vector(0.0f, 0.0f, nodeHalfHeight), m_paths[i]->origin + Vector(0.0f, 0.0f, nodeHalfHeight), nodeColor, 7, 0, 0, 10);
+                    Engine::GetReference()->DrawLine(g_hostEntity, m_paths[i]->origin - Vector(0.0f, 0.0f, nodeHalfHeight), m_paths[i]->origin + Vector(0.0f, 0.0f, nodeHalfHeight), nodeColor, 7, 0, 0, 10);
                 else // draw node with flags
                 {
-                    engine->DrawLine(g_hostEntity, m_paths[i]->origin - Vector(0.0f, 0.0f, nodeHalfHeight), m_paths[i]->origin - Vector(0.0f, 0.0f, nodeHalfHeight - nodeHeight * 0.75f), nodeColor, 7, 0, 0, 10); // draw basic path
-                    engine->DrawLine(g_hostEntity, m_paths[i]->origin - Vector(0.0f, 0.0f, nodeHalfHeight - nodeHeight * 0.75f), m_paths[i]->origin + Vector(0.0f, 0.0f, nodeHalfHeight), nodeFlagColor, 7, 0, 0, 10); // draw additional path
+                    Engine::GetReference()->DrawLine(g_hostEntity, m_paths[i]->origin - Vector(0.0f, 0.0f, nodeHalfHeight), m_paths[i]->origin - Vector(0.0f, 0.0f, nodeHalfHeight - nodeHeight * 0.75f), nodeColor, 7, 0, 0, 10); // draw basic path
+                    Engine::GetReference()->DrawLine(g_hostEntity, m_paths[i]->origin - Vector(0.0f, 0.0f, nodeHalfHeight - nodeHeight * 0.75f), m_paths[i]->origin + Vector(0.0f, 0.0f, nodeHalfHeight), nodeFlagColor, 7, 0, 0, 10); // draw additional path
                 }
 
                 if (m_paths[i]->flags & WAYPOINT_FALLCHECK || m_paths[i]->flags & WAYPOINT_WAITUNTIL)
@@ -2373,14 +2377,14 @@ void Waypoint::ShowWaypointMsg(void)
                     TraceResult tr;
                     TraceLine(m_paths[i]->origin, m_paths[i]->origin - Vector(0.0f, 0.0f, 60.0f), false, false, g_hostEntity, &tr);
                     if (tr.flFraction == 1.0f)
-                        engine->DrawLine(g_hostEntity, m_paths[i]->origin, m_paths[i]->origin - Vector(0.0f, 0.0f, 60.0f), Color(255, 0, 0, 255), 6, 0, 0, 10);
+                        Engine::GetReference()->DrawLine(g_hostEntity, m_paths[i]->origin, m_paths[i]->origin - Vector(0.0f, 0.0f, 60.0f), Color(255, 0, 0, 255), 6, 0, 0, 10);
                     else
-                        engine->DrawLine(g_hostEntity, m_paths[i]->origin, m_paths[i]->origin - Vector(0.0f, 0.0f, 60.0f), Color(0, 0, 255, 255), 6, 0, 0, 10);
+                        Engine::GetReference()->DrawLine(g_hostEntity, m_paths[i]->origin, m_paths[i]->origin - Vector(0.0f, 0.0f, 60.0f), Color(0, 0, 255, 255), 6, 0, 0, 10);
                 }
 
-                m_waypointDisplayTime[i] = engine->GetTime();
+                m_waypointDisplayTime[i] = Engine::GetReference()->GetTime();
             }
-            else if (m_waypointDisplayTime[i] + 2.0f > engine->GetTime()) // what???
+            else if (m_waypointDisplayTime[i] + 2.0f > Engine::GetReference()->GetTime()) // what???
                 m_waypointDisplayTime[i] = 0.0f;
         }
     }
@@ -2392,23 +2396,23 @@ void Waypoint::ShowWaypointMsg(void)
     if (IsValidWaypoint(m_findWPIndex) || IsValidWaypoint(m_cacheWaypointIndex) || IsValidWaypoint(m_facingAtIndex))
     {
         // check for drawing code
-        if (m_arrowDisplayTime + 0.5 < engine->GetTime())
+        if (m_arrowDisplayTime + 0.5 < Engine::GetReference()->GetTime())
         {
             // finding waypoint - pink arrow
             if (IsValidWaypoint(m_findWPIndex))
-                engine->DrawLine(g_hostEntity, m_paths[m_findWPIndex]->origin, GetEntityOrigin(g_hostEntity), Color(128, 0, 128, 255), 10, 0, 0, 5, LINE_ARROW);
+                Engine::GetReference()->DrawLine(g_hostEntity, m_paths[m_findWPIndex]->origin, GetEntityOrigin(g_hostEntity), Color(128, 0, 128, 255), 10, 0, 0, 5, LINE_ARROW);
 
             // cached waypoint - yellow arrow
             if (IsValidWaypoint(m_cacheWaypointIndex))
-                engine->DrawLine(g_hostEntity, m_paths[m_cacheWaypointIndex]->origin, GetEntityOrigin(g_hostEntity), Color(255, 255, 0, 255), 10, 0, 0, 5, LINE_ARROW);
+                Engine::GetReference()->DrawLine(g_hostEntity, m_paths[m_cacheWaypointIndex]->origin, GetEntityOrigin(g_hostEntity), Color(255, 255, 0, 255), 10, 0, 0, 5, LINE_ARROW);
 
             // waypoint user facing at - white arrow
             if (IsValidWaypoint(m_facingAtIndex))
-                engine->DrawLine(g_hostEntity, m_paths[m_facingAtIndex]->origin, GetEntityOrigin(g_hostEntity), Color(255, 255, 255, 255), 10, 0, 0, 5, LINE_ARROW);
+                Engine::GetReference()->DrawLine(g_hostEntity, m_paths[m_facingAtIndex]->origin, GetEntityOrigin(g_hostEntity), Color(255, 255, 255, 255), 10, 0, 0, 5, LINE_ARROW);
 
-            m_arrowDisplayTime = engine->GetTime();
+            m_arrowDisplayTime = Engine::GetReference()->GetTime();
         }
-        else if (m_arrowDisplayTime + 1.0 > engine->GetTime()) // what???
+        else if (m_arrowDisplayTime + 1.0 > Engine::GetReference()->GetTime()) // what???
             m_arrowDisplayTime = 0.0f;
     }
 
@@ -2416,9 +2420,9 @@ void Waypoint::ShowWaypointMsg(void)
     Path* path = m_paths[nearestIndex];
 
     // draw a paths, camplines and danger directions for nearest waypoint
-    if (nearestDistance <= 2048 && m_pathDisplayTime <= engine->GetTime())
+    if (nearestDistance <= 2048 && m_pathDisplayTime <= Engine::GetReference()->GetTime())
     {
-        m_pathDisplayTime = engine->GetTime() + 1.0f;
+        m_pathDisplayTime = Engine::GetReference()->GetTime() + 1.0f;
 
         // draw the camplines
         if (path->flags & WAYPOINT_SNIPER)
@@ -2426,8 +2430,8 @@ void Waypoint::ShowWaypointMsg(void)
             const Vector& src = path->origin + Vector(0, 0, (path->flags & WAYPOINT_CROUCH) ? 18.0f : 36.0f); // check if it's a source
 
             // draw it now
-            engine->DrawLine(g_hostEntity, src, Vector(path->campStartX, path->campStartY, src.z), Color(255, 0, 0, 255), 10, 0, 0, 10);
-            engine->DrawLine(g_hostEntity, src, Vector(path->campEndX, path->campEndY, src.z), Color(255, 0, 0, 255), 10, 0, 0, 10);
+            Engine::GetReference()->DrawLine(g_hostEntity, src, Vector(path->campStartX, path->campStartY, src.z), Color(255, 0, 0, 255), 10, 0, 0, 10);
+            Engine::GetReference()->DrawLine(g_hostEntity, src, Vector(path->campEndX, path->campEndY, src.z), Color(255, 0, 0, 255), 10, 0, 0, 10);
         }
 
         // draw the connections
@@ -2438,21 +2442,21 @@ void Waypoint::ShowWaypointMsg(void)
 
             // jump connection
             if (path->connectionFlags[i] & PATHFLAG_JUMP)
-                engine->DrawLine(g_hostEntity, path->origin, m_paths[path->index[i]]->origin, Color(255, 0, 0, 255), 5, 0, 0, 10);
+                Engine::GetReference()->DrawLine(g_hostEntity, path->origin, m_paths[path->index[i]]->origin, Color(255, 0, 0, 255), 5, 0, 0, 10);
             // boosting friend connection
             else if (path->connectionFlags[i] & PATHFLAG_DOUBLE)
-                engine->DrawLine(g_hostEntity, path->origin, m_paths[path->index[i]]->origin, Color(0, 0, 255, 255), 5, 0, 0, 10);
+                Engine::GetReference()->DrawLine(g_hostEntity, path->origin, m_paths[path->index[i]]->origin, Color(0, 0, 255, 255), 5, 0, 0, 10);
             else if (IsConnected(path->index[i], nearestIndex)) // twoway connection
-                engine->DrawLine(g_hostEntity, path->origin, m_paths[path->index[i]]->origin, Color(255, 255, 0, 255), 5, 0, 0, 10);
+                Engine::GetReference()->DrawLine(g_hostEntity, path->origin, m_paths[path->index[i]]->origin, Color(255, 255, 0, 255), 5, 0, 0, 10);
             else // oneway connection
-                engine->DrawLine(g_hostEntity, path->origin, m_paths[path->index[i]]->origin, Color(250, 250, 250, 255), 5, 0, 0, 10);
+                Engine::GetReference()->DrawLine(g_hostEntity, path->origin, m_paths[path->index[i]]->origin, Color(250, 250, 250, 255), 5, 0, 0, 10);
         }
 
         // now look for oneway incoming connections
         for (int i = 0; i < g_numWaypoints; i++)
         {
             if (IsConnected(m_paths[i]->pathNumber, path->pathNumber) && !IsConnected(path->pathNumber, m_paths[i]->pathNumber))
-                engine->DrawLine(g_hostEntity, path->origin, m_paths[i]->origin, Color(0, 192, 96, 255), 5, 0, 0, 10);
+                Engine::GetReference()->DrawLine(g_hostEntity, path->origin, m_paths[i]->origin, Color(0, 192, 96, 255), 5, 0, 0, 10);
         }
 
         // draw the radius circle
@@ -2464,18 +2468,18 @@ void Waypoint::ShowWaypointMsg(void)
             const float root = path->radius;
             const Color& def = Color(0, 0, 255, 255);
 
-            engine->DrawLine(g_hostEntity, origin + Vector(root, root, 0), origin + Vector(-root, root, 0), def, 5, 0, 0, 10);
-            engine->DrawLine(g_hostEntity, origin + Vector(root, root, 0), origin + Vector(root, -root, 0), def, 5, 0, 0, 10);
-            engine->DrawLine(g_hostEntity, origin + Vector(-root, -root, 0), origin + Vector(root, -root, 0), def, 5, 0, 0, 10);
-            engine->DrawLine(g_hostEntity, origin + Vector(-root, -root, 0), origin + Vector(-root, root, 0), def, 5, 0, 0, 10);
+            Engine::GetReference()->DrawLine(g_hostEntity, origin + Vector(root, root, 0), origin + Vector(-root, root, 0), def, 5, 0, 0, 10);
+            Engine::GetReference()->DrawLine(g_hostEntity, origin + Vector(root, root, 0), origin + Vector(root, -root, 0), def, 5, 0, 0, 10);
+            Engine::GetReference()->DrawLine(g_hostEntity, origin + Vector(-root, -root, 0), origin + Vector(root, -root, 0), def, 5, 0, 0, 10);
+            Engine::GetReference()->DrawLine(g_hostEntity, origin + Vector(-root, -root, 0), origin + Vector(-root, root, 0), def, 5, 0, 0, 10);
         }
         else
         {
             const float root = 5.0f;
             const Color& def = Color(0, 0, 255, 255);
 
-            engine->DrawLine(g_hostEntity, origin + Vector(root, -root, 0), origin + Vector(-root, root, 0), def, 5, 0, 0, 10);
-            engine->DrawLine(g_hostEntity, origin + Vector(-root, -root, 0), origin + Vector(root, root, 0), def, 5, 0, 0, 10);
+            Engine::GetReference()->DrawLine(g_hostEntity, origin + Vector(root, -root, 0), origin + Vector(-root, root, 0), def, 5, 0, 0, 10);
+            Engine::GetReference()->DrawLine(g_hostEntity, origin + Vector(-root, -root, 0), origin + Vector(root, root, 0), def, 5, 0, 0, 10);
         }
 
         g_exp.DrawLines(nearestIndex, path);
@@ -2569,7 +2573,7 @@ void Waypoint::ShowWaypointMsg(void)
         WRITE_STRING(tempMessage);
         MESSAGE_END();
     }
-    else if (m_pathDisplayTime + 2.0f > engine->GetTime()) // what???
+    else if (m_pathDisplayTime + 2.0f > Engine::GetReference()->GetTime()) // what???
         m_pathDisplayTime = 0.0f;
 }
 
@@ -3144,7 +3148,7 @@ int Waypoint::AddGoalScore(int index, int other[4])
     }
 
     if (left.IsEmpty())
-        index = other[engine->RandomInt(0, 3)];
+        index = other[Engine::GetReference()->RandomInt(0, 3)];
     else
         index = left.GetRandomElement();
 
@@ -3198,9 +3202,10 @@ Waypoint::Waypoint(void)
 
     m_distMatrix = nullptr;
     m_pathMatrix = nullptr;
+    memset(m_paths, 0, sizeof(m_paths));
 }
 
-Waypoint::~Waypoint(void)
+void Waypoint::Destroy()
 {
     if (m_distMatrix != nullptr)
         delete[] m_distMatrix;
@@ -3210,4 +3215,19 @@ Waypoint::~Waypoint(void)
 
     m_distMatrix = nullptr;
     m_pathMatrix = nullptr;
+
+    if (m_waypointPaths)
+    {
+        for (int i = 0; i < g_numWaypoints; i++)
+        {
+            delete m_paths[i];
+            m_paths[i] = nullptr;
+        }
+        m_waypointPaths = false;
+    }
+}
+
+Waypoint::~Waypoint(void)
+{
+    Destroy();
 }

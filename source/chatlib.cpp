@@ -110,14 +110,14 @@ char* HumanizeName(char* name)
     strcpy(outputName, name); // copy name to new buffer
 
     // drop tag marks, 80 percent of time
-    if (engine->RandomInt(1, 100) < 80)
+    if (Engine::GetReference()->RandomInt(1, 100) < 80)
         StripTags(outputName);
     else
         strtrim(outputName);
 
     // sometimes switch name to lower characters
     // note: since we're using russian names written in english, we reduce this shit to 6 percent
-    if (engine->RandomInt(1, 100) <= 6)
+    if (Engine::GetReference()->RandomInt(1, 100) <= 6)
     {
         for (int i = 0; i < static_cast <int> (strlen(outputName)); i++)
             outputName[i] = static_cast <char> (tolower(outputName[i])); // to lower case
@@ -184,7 +184,7 @@ void Bot::PrepareChatMessage(char* text)
             // roundtime?
             else if (*pattern == 'r')
             {
-                int time = static_cast <int> (g_timeRoundEnd - engine->GetTime());
+                int time = static_cast <int> (g_timeRoundEnd - Engine::GetReference()->GetTime());
                 strcat(m_tempStrings, FormatBuffer("%02d:%02d", time / 60, time % 60));
             }
             // chat reply?
@@ -287,18 +287,18 @@ void Bot::PrepareChatMessage(char* text)
             {
                 if (g_gameVersion == CSVER_CZERO)
                 {
-                    if (engine->RandomInt(1, 100) < 30)
+                    if (Engine::GetReference()->RandomInt(1, 100) < 30)
                         strcat(m_tempStrings, "CZ");
-                    else if (engine->RandomInt(1, 100) < 80)
+                    else if (Engine::GetReference()->RandomInt(1, 100) < 80)
                         strcat(m_tempStrings, "KoHTpa K3");
                     else
                         strcat(m_tempStrings, "Condition Zero");
                 }
                 else if ((g_gameVersion == CSVER_CSTRIKE) || (g_gameVersion == CSVER_VERYOLD))
                 {
-                    if (engine->RandomInt(1, 100) < 30)
+                    if (Engine::GetReference()->RandomInt(1, 100) < 30)
                         strcat(m_tempStrings, "CS");
-                    else if (engine->RandomInt(1, 100) < 80)
+                    else if (Engine::GetReference()->RandomInt(1, 100) < 80)
                         strcat(m_tempStrings, "KoHTpa");
                     else
                         strcat(m_tempStrings, "Counter-Strike");
@@ -395,16 +395,16 @@ bool Bot::RepliesToPlayer(void)
         char text[256];
 
         // check is time to chat is good
-        if (m_sayTextBuffer.timeNextChat < engine->GetTime())
+        if (m_sayTextBuffer.timeNextChat < Engine::GetReference()->GetTime())
         {
-            if (engine->RandomInt(1, 100) <= m_sayTextBuffer.chatProbability + engine->RandomInt(20, 60) && ParseChat(text))
+            if (Engine::GetReference()->RandomInt(1, 100) <= m_sayTextBuffer.chatProbability + Engine::GetReference()->RandomInt(20, 60) && ParseChat(text))
             {
                 PrepareChatMessage(text);
                 PushMessageQueue(CMENU_SAY);
 
                 m_sayTextBuffer.entityIndex = -1;
                 m_sayTextBuffer.sayText[0] = 0x0;
-                m_sayTextBuffer.timeNextChat = engine->GetTime() + m_sayTextBuffer.chatDelay;
+                m_sayTextBuffer.timeNextChat = Engine::GetReference()->GetTime() + m_sayTextBuffer.chatDelay;
 
                 return true;
             }

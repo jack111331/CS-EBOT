@@ -3429,8 +3429,6 @@ public:
     }
 };
 
-#define engine Engine::GetReference ()
-
 class Tracer
 {
 private:

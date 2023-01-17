@@ -119,7 +119,7 @@ void BotExperience::UpdateGlobalKnowledge(void)
         for (int t = 0; t < TEAM_COUNT; t++)
         {
             for (int i = 0; i < g_numWaypoints; i++)
-                SetDamage(i, i, static_cast <int> (GetDamage(i, i, t) / (engine->GetMaxClients() * 0.5f)), t);
+                SetDamage(i, i, static_cast <int> (GetDamage(i, i, t) / (Engine::GetReference()->GetMaxClients() * 0.5f)), t);
         }
         m_history = 1;
     }
@@ -228,7 +228,10 @@ void BotExperience::Load(void)
 
 void BotExperience::Unload(void)
 {
+    if (m_data != nullptr)
+        delete[] m_data;
 
+    m_data = nullptr;
 }
 
 void BotExperience::DrawText(int index, char storage[4096], int& length)
@@ -257,7 +260,7 @@ void BotExperience::DrawLines(int nearest, Path* path)
         int index = GetDangerIndex(nearest, nearest, t);
 
         if (index != -1)
-            engine->DrawLine(g_hostEntity, path->origin, g_waypoint->GetPath(index)->origin, Color(t == TEAM_COUNTER ? 0 : 255, 0, t == TEAM_COUNTER ? 255 : 0, 200), 15, 0, 0, 10, LINE_ARROW); // draw a arrow to this index's danger point
+            Engine::GetReference()->DrawLine(g_hostEntity, path->origin, g_waypoint->GetPath(index)->origin, Color(t == TEAM_COUNTER ? 0 : 255, 0, t == TEAM_COUNTER ? 255 : 0, 200), 15, 0, 0, 10, LINE_ARROW); // draw a arrow to this index's danger point
     }
 }
 

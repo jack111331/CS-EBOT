@@ -108,7 +108,7 @@ int BotCommandHandler_O(edict_t* ent, const String& arg0, const String& arg1, co
 	// swap counter-terrorist and terrorist teams
 	else if (stricmp(arg0, "swaptteams") == 0 || stricmp(arg0, "swap") == 0)
 	{
-		for (int i = 0; i < engine->GetMaxClients(); i++)
+		for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 		{
 			if (!(g_clients[i].flags & CFLAG_USED))
 				continue;
@@ -140,7 +140,7 @@ int BotCommandHandler_O(edict_t* ent, const String& arg0, const String& arg1, co
 			int nominatedMap = atoi(arg1);
 
 			// loop through all players
-			for (int i = 0; i < engine->GetMaxClients(); i++)
+			for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 			{
 				if (g_botManager->GetBot(i) != nullptr)
 					g_botManager->GetBot(i)->m_voteMap = nominatedMap;
@@ -200,7 +200,7 @@ int BotCommandHandler_O(edict_t* ent, const String& arg0, const String& arg1, co
 #endif
 			"+---------------------------------------------------------------------------------+\n";
 
-		HudMessage(ent, true, Color(engine->RandomInt(33, 255), engine->RandomInt(33, 255), engine->RandomInt(33, 255)), aboutData);
+		HudMessage(ent, true, Color(Engine::GetReference()->RandomInt(33, 255), Engine::GetReference()->RandomInt(33, 255), Engine::GetReference()->RandomInt(33, 255)), aboutData);
 	}
 
 	// displays version information
@@ -277,7 +277,7 @@ int BotCommandHandler_O(edict_t* ent, const String& arg0, const String& arg1, co
 		{
 			ClientPrint(ent, print_withtag, "E-Bot health is set to %d%%", atoi(arg1));
 
-			for (int i = 0; i < engine->GetMaxClients(); i++)
+			for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 			{
 				if (g_botManager->GetBot(i) != nullptr)
 					g_botManager->GetBot(i)->pev->health = fabsf(static_cast <float> (atof(arg1)));
@@ -347,7 +347,7 @@ int BotCommandHandler_O(edict_t* ent, const String& arg0, const String& arg1, co
 		if (stricmp(arg0, "randgen") == 0)
 		{
 			for (int i = 0; i < 500; i++)
-				ServerPrintNoTag("Result Range[0 - 100]: %d", engine->RandomInt(0, 100));
+				ServerPrintNoTag("Result Range[0 - 100]: %d", Engine::GetReference()->RandomInt(0, 100));
 		}
 	}
 
@@ -751,7 +751,7 @@ void InitConfig(void)
 	int chatType = -1;
 
 	// fixes for crashing if configs couldn't be accessed
-	g_chatFactory.Destory();
+	g_chatFactory.Destroy();
 	g_chatFactory.SetSize(CHAT_NUM);
 	for (int i = 0; i < CHAT_NUM; ++i) 
 	{
@@ -1066,7 +1066,7 @@ void GameDLLInit(void)
 	// server is enabled. Here is a good place to do our own game session initialization, and
 	// to register by the engine side the server commands we need to administrate our bots.
 
-	engine->PushRegisteredConVarsToEngine();
+	Engine::GetReference()->PushRegisteredConVarsToEngine();
 
 	RegisterCommand("ebot_about", ebot_Version_Command);
 
@@ -1874,7 +1874,7 @@ void ClientCommand(edict_t* ent)
 								bot->m_doubleJumpOrigin = GetEntityOrigin(client->ent);
 								bot->m_doubleJumpEntity = client->ent;
 
-								bot->PushTask(TASK_DOUBLEJUMP, TASKPRI_DOUBLEJUMP, -1, engine->GetTime(), true);
+								bot->PushTask(TASK_DOUBLEJUMP, TASKPRI_DOUBLEJUMP, -1, Engine::GetReference()->GetTime(), true);
 								bot->ChatSay(true, FormatBuffer("Ok %s, i will help you!", GetEntityName(ent)));
 							}
 							else if (selection == 2)
@@ -2167,23 +2167,23 @@ void ClientCommand(edict_t* ent)
 				switch (selection)
 				{
 				case 1:
-					g_storeAddbotVars[0] = engine->RandomInt(0, 20);
+					g_storeAddbotVars[0] = Engine::GetReference()->RandomInt(0, 20);
 					break;
 
 				case 2:
-					g_storeAddbotVars[0] = engine->RandomInt(20, 40);
+					g_storeAddbotVars[0] = Engine::GetReference()->RandomInt(20, 40);
 					break;
 
 				case 3:
-					g_storeAddbotVars[0] = engine->RandomInt(40, 60);
+					g_storeAddbotVars[0] = Engine::GetReference()->RandomInt(40, 60);
 					break;
 
 				case 4:
-					g_storeAddbotVars[0] = engine->RandomInt(60, 80);
+					g_storeAddbotVars[0] = Engine::GetReference()->RandomInt(60, 80);
 					break;
 
 				case 5:
-					g_storeAddbotVars[0] = engine->RandomInt(80, 99);
+					g_storeAddbotVars[0] = Engine::GetReference()->RandomInt(80, 99);
 					break;
 
 				case 6:
@@ -2527,7 +2527,7 @@ void ClientCommand(edict_t* ent)
 		if (FStrEq(command, "say_team"))
 			team = GetTeam(ent);
 
-		for (int i = 0; i < engine->GetMaxClients(); i++)
+		for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 		{
 			if (!(g_clients[i].flags & CFLAG_USED) || (team != -1 && team != g_clients[i].team) || isAlive != IsAlive(g_clients[i].ent))
 				continue;
@@ -2542,7 +2542,7 @@ void ClientCommand(edict_t* ent)
 					continue;
 
 				strcpy(iter->m_sayTextBuffer.sayText, CMD_ARGS());
-				iter->m_sayTextBuffer.timeNextChat = engine->GetTime() + iter->m_sayTextBuffer.chatDelay;
+				iter->m_sayTextBuffer.timeNextChat = Engine::GetReference()->GetTime() + iter->m_sayTextBuffer.chatDelay;
 			}
 		}
 	}
@@ -2559,7 +2559,7 @@ void ClientCommand(edict_t* ent)
 
 			if (radioCommand != Radio_Affirmative && radioCommand != Radio_Negative && radioCommand != Radio_ReportingIn)
 			{
-				for (int i = 0; i < engine->GetMaxClients(); i++)
+				for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 				{
 					Bot* bot = g_botManager->GetBot(i);
 
@@ -2573,7 +2573,7 @@ void ClientCommand(edict_t* ent)
 			}
 			
 			if (g_clients[clientIndex].team == 0 || g_clients[clientIndex].team == 1)
-				g_lastRadioTime[g_clients[clientIndex].team] = engine->GetTime();
+				g_lastRadioTime[g_clients[clientIndex].team] = Engine::GetReference()->GetTime();
 		}
 		g_radioSelect[clientIndex] = 0;
 	}
@@ -2635,6 +2635,9 @@ void ServerDeactivate(void)
 
 	// save collected experience on shutdown
 	g_exp.Unload();
+	g_waypoint->Destroy();
+	g_botManager->Destroy();
+	// TODO free global data
 
 	if (g_isMetamod)
 		RETURN_META(MRES_IGNORED);
@@ -2675,14 +2678,14 @@ void LoadEntityData(void)
 			continue;
 		}
 
-		if (g_entityGetWpTime[i] + 1.5f < engine->GetTime() || g_entityWpIndex[i] == -1)
+		if (g_entityGetWpTime[i] + 1.5f < Engine::GetReference()->GetTime() || g_entityWpIndex[i] == -1)
 			SetEntityWaypoint(entity);
 	}
 
-	for (i = 0; i < engine->GetMaxClients(); i++)
+	for (i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		entity = INDEXENT(i+1);
-		// although start from 1, engine->GetMaxClients is 32 size and g_clients's size is 32, which index should only be in 0~31
+		// although start from 1, Engine::GetReference()->GetMaxClients is 32 size and g_clients's size is 32, which index should only be in 0~31
 		if (FNullEnt(entity) || !(entity->v.flags & FL_CLIENT))
 		{
 			g_clients[i].flags &= ~(CFLAG_USED | CFLAG_ALIVE);
@@ -2711,7 +2714,7 @@ void LoadEntityData(void)
 				g_hostEntity->v.movetype = MOVETYPE_NOCLIP;
 
 			g_clients[i].origin = GetEntityOrigin(entity);
-			if (g_clients[i].getWPTime + 1.2f < engine->GetTime() || (g_clients[i].wpIndex == -1 && g_clients[i].wpIndex2 == -1))
+			if (g_clients[i].getWPTime + 1.2f < Engine::GetReference()->GetTime() || (g_clients[i].wpIndex == -1 && g_clients[i].wpIndex2 == -1))
 				SetEntityWaypoint(entity);
 
 			continue;
@@ -2736,9 +2739,9 @@ void SetPing(edict_t* to)
 
 	// update timer if someone lookin' at scoreboard
 	if (to->v.button & IN_SCORE || to->v.oldbuttons & IN_SCORE)
-		g_fakePingUpdate = engine->GetTime() + 2.0f;
+		g_fakePingUpdate = Engine::GetReference()->GetTime() + 2.0f;
 
-	if (g_fakePingUpdate < engine->GetTime())
+	if (g_fakePingUpdate < Engine::GetReference()->GetTime())
 		return;
 
 	static int sending;
@@ -2746,7 +2749,7 @@ void SetPing(edict_t* to)
 	// missing from sdk
 	static const int SVC_PINGS = 17;
 
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		Bot* bot = g_botManager->GetBot(i);
 		if (bot == nullptr)
@@ -2806,7 +2809,7 @@ void JustAStuff(void)
 	int i;
 	if (IsDedicatedServer())
 	{
-		for (i = 0; i < engine->GetMaxClients(); i++)
+		for (i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 		{
 			edict_t* player = INDEXENT(i+1);
 
@@ -2842,7 +2845,7 @@ void JustAStuff(void)
 		if (g_waypointOn)
 		{
 			bool hasBot = false;
-			for (i = 0; i < engine->GetMaxClients(); i++)
+			for (i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 			{
 				if (g_botManager->GetBot(i))
 				{
@@ -2893,7 +2896,7 @@ void FrameThread(void)
 		}
 	}
 
-	if (secondTimer < engine->GetTime())
+	if (secondTimer < Engine::GetReference()->GetTime())
 	{
 		async(launch::async, LoadEntityData);
 		async(launch::async, JustAStuff);
@@ -3161,7 +3164,7 @@ void pfnMessageBegin(int msgDest, int msgType, const float* origin, edict_t* ed)
 
 		if (msgType == SVC_INTERMISSION)
 		{
-			for (int i = 0; i < engine->GetMaxClients(); i++)
+			for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 			{
 				Bot* bot = g_botManager->GetBot(i);
 
@@ -3482,7 +3485,7 @@ void pfnAlertMessage(ALERT_TYPE alertType, char* format, ...)
 	if (strstr(buffer, "_Defuse_") != nullptr)
 	{
 		// notify all terrorists that CT is starting bomb defusing
-		for (int i = 0; i < engine->GetMaxClients(); i++)
+		for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 		{
 			Bot* bot = g_botManager->GetBot(i);
 
@@ -3795,7 +3798,7 @@ export int Amxx_SetEnemy(int index, int target, float blockCheckTime) // 1.30
 	edict_t* targetEnt = INDEXENT(target);
 	if (target == -1 || FNullEnt(targetEnt) || !IsAlive(targetEnt))
 	{
-		bot->m_blockCheckEnemyTime = engine->GetTime();
+		bot->m_blockCheckEnemyTime = Engine::GetReference()->GetTime();
 		bot->m_enemyAPI = nullptr;
 		API_TestMSG("Amxx_SetEnemy Checking - targetName:%s | blockCheckTime:%.2f - Done",
 			"Not target", blockCheckTime);
@@ -3803,7 +3806,7 @@ export int Amxx_SetEnemy(int index, int target, float blockCheckTime) // 1.30
 		return -1;
 	}
 
-	bot->m_blockCheckEnemyTime = engine->GetTime() + blockCheckTime;
+	bot->m_blockCheckEnemyTime = Engine::GetReference()->GetTime() + blockCheckTime;
 	bot->m_enemyAPI = targetEnt;
 	API_TestMSG("Amxx_SetEnemy Checking - targetName:%s | blockCheckTime:%.2f - Done",
 		GetEntityName(targetEnt), blockCheckTime);

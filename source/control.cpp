@@ -56,7 +56,7 @@ BotControl::BotControl(void)
 	InitQuota();
 }
 
-// this is a bot manager class destructor, do not use engine->GetMaxClients () here !!
+// this is a bot manager class destructor, do not use Engine::GetReference()->GetMaxClients () here !!
 BotControl::~BotControl(void)
 {
 	for (int i = 0; i < 32; i++)
@@ -67,6 +67,13 @@ BotControl::~BotControl(void)
 			m_bots[i] = nullptr;
 		}
 	}
+	m_creationTab.Destroy();
+	Destroy();
+}
+
+void BotControl::Destroy()
+{
+	m_avatars.Destroy();
 }
 
 // this function calls gamedll player() function, in case to create player entity in game
@@ -119,28 +126,28 @@ int BotControl::CreateBot(String name, int skill, int personality, int team, int
 		if (ebot_difficulty.GetInt() >= 4)
 			skill = 100;
 		else if (ebot_difficulty.GetInt() == 3)
-			skill = engine->RandomInt(79, 99);
+			skill = Engine::GetReference()->RandomInt(79, 99);
 		else if (ebot_difficulty.GetInt() == 2)
-			skill = engine->RandomInt(50, 79);
+			skill = Engine::GetReference()->RandomInt(50, 79);
 		else if (ebot_difficulty.GetInt() == 1)
-			skill = engine->RandomInt(30, 50);
+			skill = Engine::GetReference()->RandomInt(30, 50);
 		else if (ebot_difficulty.GetInt() == 0)
-			skill = engine->RandomInt(1, 30);
+			skill = Engine::GetReference()->RandomInt(1, 30);
 		else
 		{
 			int maxSkill = ebot_maxskill.GetInt();
 			int minSkill = (ebot_minskill.GetInt() == 0) ? 1 : ebot_minskill.GetInt();
 
 			if (maxSkill <= 100 && minSkill > 0)
-				skill = engine->RandomInt(minSkill, maxSkill);
+				skill = Engine::GetReference()->RandomInt(minSkill, maxSkill);
 			else
-				skill = engine->RandomInt(0, 100);
+				skill = Engine::GetReference()->RandomInt(0, 100);
 		}
 	}
 
 	if (personality < 0 || personality > 2)
 	{
-		int randomPrecent = engine->RandomInt(1, 3);
+		int randomPrecent = Engine::GetReference()->RandomInt(1, 3);
 
 		if (randomPrecent == 1)
 			personality = PERSONALITY_NORMAL;
@@ -186,7 +193,7 @@ int BotControl::CreateBot(String name, int skill, int personality, int team, int
 			}
 		}
 		else
-			sprintf(outputName, "e-bot %i", engine->RandomInt(1, 9999)); // just pick ugly random name
+			sprintf(outputName, "e-bot %i", Engine::GetReference()->RandomInt(1, 9999)); // just pick ugly random name
 	}
 	else
 		sprintf(outputName, "%s", (char*)name);
@@ -201,7 +208,7 @@ int BotControl::CreateBot(String name, int skill, int personality, int team, int
 
 	if (FNullEnt((bot = (*g_engfuncs.pfnCreateFakeClient) (botName))))
 	{
-		CenterPrint(" Unable to create E-Bot, Maximum players reached (%d/%d)", engine->GetMaxClients(), engine->GetMaxClients());
+		CenterPrint(" Unable to create E-Bot, Maximum players reached (%d/%d)", Engine::GetReference()->GetMaxClients(), Engine::GetReference()->GetMaxClients());
 		return -2;
 	}
 
@@ -259,7 +266,7 @@ Bot* BotControl::FindOneValidAliveBot(void)
 {
 	Array <int> foundBots;
 
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		if (m_bots[i] != nullptr && IsAlive(m_bots[i]->GetEntity()))
 			foundBots.Push(i);
@@ -280,11 +287,11 @@ void BotControl::DoJoinQuitStuff(void)
 	if (!m_savedBotNames.IsEmpty())
 		AddBot((char*)m_savedBotNames.Pop(), -1, -1, -1, -1);
 
-	if (m_randomJoinTime > engine->GetTime())
+	if (m_randomJoinTime > Engine::GetReference()->GetTime())
 		return;
 
 	// add one more
-	if (engine->RandomInt(1, GetHumansNum()) <= 2);
+	if (Engine::GetReference()->RandomInt(1, GetHumansNum()) <= 2);
 		g_botManager->AddRandom();
 
 	g_botManager->AddRandom();
@@ -321,22 +328,22 @@ void BotControl::Think(void)
 	async(launch::async, ThreadedJoinQuit);
 
 	extern ConVar ebot_stopbots;
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		if (m_bots[i] == nullptr)
 			continue;
 
 		bool runThink = false;
 
-		if (m_bots[i]->m_thinkTimer <= engine->GetTime())
+		if (m_bots[i]->m_thinkTimer <= Engine::GetReference()->GetTime())
 		{
-			if (m_bots[i]->m_lastThinkTime <= engine->GetTime())
+			if (m_bots[i]->m_lastThinkTime <= Engine::GetReference()->GetTime())
 				runThink = true;
 		}
 
 		if (runThink)
 		{
-			m_bots[i]->m_thinkTimer = AddTime(engine->RandomFloat(0.9f, 1.1f) / 20.0f);
+			m_bots[i]->m_thinkTimer = AddTime(Engine::GetReference()->RandomFloat(0.9f, 1.1f) / 20.0f);
 			async(launch::async, ThreadedThink, i);
 		}
 		else if (!ebot_stopbots.GetBool() && m_bots[i]->m_notKilled)
@@ -464,10 +471,10 @@ void BotControl::CheckBotNum(void)
 
 	if (ebot_auto_players.GetInt() != -1)
 	{
-		if (ebot_auto_players.GetInt() > engine->GetMaxClients())
+		if (ebot_auto_players.GetInt() > Engine::GetReference()->GetMaxClients())
 		{
-			ServerPrint("Server Max Clients is %d, You cannot set this value", engine->GetMaxClients());
-			ebot_auto_players.SetInt(engine->GetMaxClients());
+			ServerPrint("Server Max Clients is %d, You cannot set this value", Engine::GetReference()->GetMaxClients());
+			ebot_auto_players.SetInt(Engine::GetReference()->GetMaxClients());
 		}
 
 		needBotNumber = ebot_auto_players.GetInt() - GetHumansNum();
@@ -507,7 +514,7 @@ int BotControl::AddBotAPI(const String& name, int skill, int team)
 // while creation process in process.
 void BotControl::MaintainBotQuota(void)
 {
-	if (!m_creationTab.IsEmpty() && m_maintainTime < engine->GetTime())
+	if (!m_creationTab.IsEmpty() && m_maintainTime < Engine::GetReference()->GetTime())
 	{
 		CreateItem last = m_creationTab.Pop();
 
@@ -534,10 +541,10 @@ void BotControl::MaintainBotQuota(void)
 		return;
 
 	g_botManager->CheckBotNum();
-	if (m_maintainTime < engine->GetTime())
+	if (m_maintainTime < Engine::GetReference()->GetTime())
 	{
 		int botNumber = GetBotsNum();
-		int maxClients = engine->GetMaxClients();
+		int maxClients = Engine::GetReference()->GetMaxClients();
 		int desiredBotCount = ebot_quota.GetInt();
 		
 		if (ebot_autovacate.GetBool())
@@ -548,7 +555,7 @@ void BotControl::MaintainBotQuota(void)
 		else if (botNumber < desiredBotCount && botNumber < maxClients)
 			AddRandom();
 		else if (ebot_save_bot_names.GetBool() && !m_savedBotNames.IsEmpty()) // clear the saved names when quota balancing ended
-			m_savedBotNames.Destory();
+			m_savedBotNames.Destroy();
 
 		if (ebot_quota.GetInt() > maxClients)
 			ebot_quota.SetInt(maxClients);
@@ -571,7 +578,7 @@ void BotControl::InitQuota(void)
 void BotControl::FillServer(int selection, int personality, int skill, int numToAdd)
 {
 	// always keep one slot
-	int maxClients = ebot_autovacate.GetBool() ? engine->GetMaxClients() - 1 - (IsDedicatedServer() ? 0 : GetHumansNum()) : engine->GetMaxClients();
+	int maxClients = ebot_autovacate.GetBool() ? Engine::GetReference()->GetMaxClients() - 1 - (IsDedicatedServer() ? 0 : GetHumansNum()) : Engine::GetReference()->GetMaxClients();
 
 	if (GetBotsNum() >= maxClients - GetHumansNum())
 		return;
@@ -603,15 +610,15 @@ void BotControl::FillServer(int selection, int personality, int skill, int numTo
 		int randomizedSkill = 0;
 
 		if (skill >= 0 && skill <= 20)
-			randomizedSkill = engine->RandomInt(0, 20);
+			randomizedSkill = Engine::GetReference()->RandomInt(0, 20);
 		else if (skill >= 20 && skill <= 40)
-			randomizedSkill = engine->RandomInt(20, 40);
+			randomizedSkill = Engine::GetReference()->RandomInt(20, 40);
 		else if (skill >= 40 && skill <= 60)
-			randomizedSkill = engine->RandomInt(40, 60);
+			randomizedSkill = Engine::GetReference()->RandomInt(40, 60);
 		else if (skill >= 60 && skill <= 80)
-			randomizedSkill = engine->RandomInt(60, 80);
+			randomizedSkill = Engine::GetReference()->RandomInt(60, 80);
 		else if (skill >= 80 && skill <= 99)
-			randomizedSkill = engine->RandomInt(80, 99);
+			randomizedSkill = Engine::GetReference()->RandomInt(80, 99);
 		else if (skill == 100)
 			randomizedSkill = skill;
 
@@ -627,7 +634,7 @@ void BotControl::RemoveAll(void)
 {
 	CenterPrint("E-Bots are removed from server");
 
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		Bot* bot = g_botManager->GetBot(i);
 		if (bot != nullptr) // is this slot used?
@@ -638,7 +645,7 @@ void BotControl::RemoveAll(void)
 
 	// if everyone is kicked, clear the saved bot names
 	if (ebot_save_bot_names.GetBool() && !m_savedBotNames.IsEmpty())
-		m_savedBotNames.Destory();
+		m_savedBotNames.Destroy();
 
 	// reset cvars
 	ebot_quota.SetInt(0);
@@ -648,7 +655,7 @@ void BotControl::RemoveAll(void)
 // this function remove random bot from specified team (if removeAll value = 1 then removes all players from team)
 void BotControl::RemoveFromTeam(Team team, bool removeAll)
 {
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		Bot* bot = g_botManager->GetBot(i);
 
@@ -722,7 +729,7 @@ void BotControl::RemoveMenu(edict_t* ent, int selection)
 // this function kills all bots on server (only this dll controlled bots)
 void BotControl::KillAll(int team)
 {
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		Bot* bot = g_botManager->GetBot(i);
 		if (bot != nullptr)
@@ -740,7 +747,7 @@ void BotControl::KillAll(int team)
 // this function removes random bot from server (only ebots)
 void BotControl::RemoveRandom(void)
 {
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		Bot* bot = g_botManager->GetBot(i);
 		if (bot != nullptr)  // is this slot used?
@@ -807,7 +814,7 @@ void BotControl::ListBots(void)
 {
 	ServerPrintNoTag("%-3.5s %-9.13s %-17.18s %-3.4s %-3.4s %-3.4s", "index", "name", "personality", "team", "skill", "frags");
 
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		edict_t* player = INDEXENT(i);
 
@@ -821,7 +828,7 @@ void BotControl::ListBots(void)
 int BotControl::GetBotsNum(void)
 {
 	int count = 0;
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		if (m_bots[i] != nullptr)
 			count++;
@@ -834,7 +841,7 @@ int BotControl::GetBotsNum(void)
 int BotControl::GetHumansNum()
 {
 	int count = 0;
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		if ((g_clients[i].flags & CFLAG_USED) && m_bots[i] == nullptr)
 			count++;
@@ -852,7 +859,7 @@ Bot* BotControl::GetHighestSkillBot(int team)
 	int bestSkill = -1;
 
 	// search bots in this team
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		highFragBot = g_botManager->GetBot(i);
 
@@ -884,7 +891,7 @@ void BotControl::CheckTeamEconomics(int team)
 	int numTeamPlayers = 0;
 
 	// start calculating
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		if (m_bots[i] != nullptr && GetTeam(m_bots[i]->GetEntity()) == team)
 		{
@@ -964,7 +971,7 @@ Bot::Bot(edict_t* bot, int skill, int personality, int team, int member)
 		SET_CLIENT_KEYVALUE(clientIndex, buffer, "*bot", "1");
 
 	rejectReason[0] = 0; // reset the reject reason template string
-	MDLL_ClientConnect(bot, "E-BOT", FormatBuffer("%d.%d.%d.%d", engine->RandomInt(1, 255), engine->RandomInt(1, 255), engine->RandomInt(1, 255), engine->RandomInt(1, 255)), rejectReason);
+	MDLL_ClientConnect(bot, "E-BOT", FormatBuffer("%d.%d.%d.%d", Engine::GetReference()->RandomInt(1, 255), Engine::GetReference()->RandomInt(1, 255), Engine::GetReference()->RandomInt(1, 255), Engine::GetReference()->RandomInt(1, 255)), rejectReason);
 
 	// should be set after client connect
 	if (ebot_display_avatar.GetBool() && !g_botManager->m_avatars.IsEmpty())
@@ -983,47 +990,47 @@ Bot::Bot(edict_t* bot, int skill, int personality, int team, int member)
 	// initialize all the variables for this bot...
 	m_notStarted = true;  // hasn't joined game yet
 	m_difficulty = ebot_difficulty.GetInt(); // set difficulty
-	m_basePingLevel = engine->RandomInt(11, 111);
+	m_basePingLevel = Engine::GetReference()->RandomInt(11, 111);
 
 	m_startAction = CMENU_IDLE;
 	m_moneyAmount = 0;
-	m_logotypeIndex = engine->RandomInt(0, 5);
+	m_logotypeIndex = Engine::GetReference()->RandomInt(0, 5);
 
 	// initialize msec value
 	m_msecNum = m_msecDel = 0.0f;
-	m_msecInterval = engine->GetTime();
+	m_msecInterval = Engine::GetReference()->GetTime();
 	m_msecVal = static_cast <uint8_t> (g_pGlobals->frametime * 1000.0f);
-	m_msecBuiltin = engine->RandomInt(1, 4);
+	m_msecBuiltin = Engine::GetReference()->RandomInt(1, 4);
 
 	// assign how talkative this bot will be
-	m_sayTextBuffer.chatDelay = engine->RandomFloat(3.8f, 10.0f);
-	m_sayTextBuffer.chatProbability = engine->RandomInt(1, 100);
+	m_sayTextBuffer.chatDelay = Engine::GetReference()->RandomFloat(3.8f, 10.0f);
+	m_sayTextBuffer.chatProbability = Engine::GetReference()->RandomInt(1, 100);
 
 	m_notKilled = false;
 	m_skill = skill;
 	m_weaponBurstMode = BURST_DISABLED;
 
-	m_lastThinkTime = engine->GetTime();
-	m_frameInterval = engine->GetTime();
+	m_lastThinkTime = Engine::GetReference()->GetTime();
+	m_frameInterval = Engine::GetReference()->GetTime();
 
 	switch (personality)
 	{
 	case 1:
 		m_personality = PERSONALITY_RUSHER;
-		m_baseAgressionLevel = engine->RandomFloat(0.8f, 1.2f);
-		m_baseFearLevel = engine->RandomFloat(0.0f, 0.5f);
+		m_baseAgressionLevel = Engine::GetReference()->RandomFloat(0.8f, 1.2f);
+		m_baseFearLevel = Engine::GetReference()->RandomFloat(0.0f, 0.5f);
 		break;
 
 	case 2:
 		m_personality = PERSONALITY_CAREFUL;
-		m_baseAgressionLevel = engine->RandomFloat(0.0f, 0.3f);
-		m_baseFearLevel = engine->RandomFloat(0.75f, 1.0f);
+		m_baseAgressionLevel = Engine::GetReference()->RandomFloat(0.0f, 0.3f);
+		m_baseFearLevel = Engine::GetReference()->RandomFloat(0.75f, 1.0f);
 		break;
 
 	default:
 		m_personality = PERSONALITY_NORMAL;
-		m_baseAgressionLevel = engine->RandomFloat(0.4f, 0.8f);
-		m_baseFearLevel = engine->RandomFloat(0.4f, 0.8f);
+		m_baseAgressionLevel = Engine::GetReference()->RandomFloat(0.4f, 0.8f);
+		m_baseFearLevel = Engine::GetReference()->RandomFloat(0.4f, 0.8f);
 		break;
 	}
 
@@ -1031,11 +1038,11 @@ Bot::Bot(edict_t* bot, int skill, int personality, int team, int member)
 	memset(&m_ammo, 0, sizeof(m_ammo));
 
 	m_currentWeapon = 0; // current weapon is not assigned at start
-	m_voicePitch = engine->RandomInt(80, 120); // assign voice pitch
+	m_voicePitch = Engine::GetReference()->RandomInt(80, 120); // assign voice pitch
 
 	m_agressionLevel = m_baseAgressionLevel;
 	m_fearLevel = m_baseFearLevel;
-	m_nextEmotionUpdate = engine->GetTime() + 0.5f;
+	m_nextEmotionUpdate = Engine::GetReference()->GetTime() + 0.5f;
 
 	// just to be sure
 	m_actMessageIndex = 0;
@@ -1070,7 +1077,7 @@ Bot::~Bot(void)
 // this function initializes a bot after creation & at the start of each round
 void Bot::NewRound(void)
 {
-	if (ebot_random_join_quit.GetBool() && m_stayTime > 0.0f && m_stayTime < engine->GetTime())
+	if (ebot_random_join_quit.GetBool() && m_stayTime > 0.0f && m_stayTime < Engine::GetReference()->GetTime())
 		Kick();
 
 	int i = 0;
@@ -1078,8 +1085,8 @@ void Bot::NewRound(void)
 	// delete all allocated path nodes
 	DeleteSearchNodes();
 
-	m_itaimstart = engine->GetTime();
-	m_aimStopTime = engine->GetTime();
+	m_itaimstart = Engine::GetReference()->GetTime();
+	m_aimStopTime = Engine::GetReference()->GetTime();
 	m_currentWaypointIndex = -1;
 	m_currentTravelFlags = 0;
 	m_desiredVelocity = nullvec;
@@ -1093,7 +1100,7 @@ void Bot::NewRound(void)
 
 	m_prevWptIndex = -1;
 
-	m_navTimeset = engine->GetTime();
+	m_navTimeset = Engine::GetReference()->GetTime();
 
 	// clear all states & tasks
 	m_states = 0;
@@ -1109,8 +1116,8 @@ void Bot::NewRound(void)
 	m_minSpeed = 260.0f;
 	m_prevSpeed = 0.0f;
 	m_prevOrigin = Vector(9999.0, 9999.0, 9999.0f);
-	m_prevTime = engine->GetTime();
-	m_blindRecognizeTime = engine->GetTime();
+	m_prevTime = Engine::GetReference()->GetTime();
+	m_blindRecognizeTime = Engine::GetReference()->GetTime();
 
 	m_viewDistance = 4096.0f;
 	m_maxViewDistance = 4096.0f;
@@ -1167,8 +1174,8 @@ void Bot::NewRound(void)
 	m_reloadState = RSTATE_NONE;
 
 	m_reloadCheckTime = 0.0f;
-	m_shootTime = engine->GetTime();
-	m_playerTargetTime = engine->GetTime();
+	m_shootTime = Engine::GetReference()->GetTime();
+	m_playerTargetTime = Engine::GetReference()->GetTime();
 	m_firePause = 0.0f;
 	m_timeLastFired = 0.0f;
 
@@ -1181,7 +1188,7 @@ void Bot::NewRound(void)
 	m_isStuck = false;
 	m_jumpFinished = false;
 
-	m_sayTextBuffer.timeNextChat = engine->GetTime();
+	m_sayTextBuffer.timeNextChat = Engine::GetReference()->GetTime();
 	m_sayTextBuffer.entityIndex = -1;
 	m_sayTextBuffer.sayText[0] = 0x0;
 
@@ -1198,7 +1205,7 @@ void Bot::NewRound(void)
 		m_currentWeapon = 0;
 	}
 
-	m_nextBuyTime = AddTime(engine->RandomFloat(0.6f, 1.2f));
+	m_nextBuyTime = AddTime(Engine::GetReference()->RandomFloat(0.6f, 1.2f));
 
 	m_buyPending = false;
 	m_inBombZone = false;
@@ -1218,9 +1225,9 @@ void Bot::NewRound(void)
 	m_radioOrder = 0;
 	m_defendedBomb = false;
 
-	m_timeLogoSpray = AddTime(engine->RandomFloat(0.5f, 2.0f));
-	m_spawnTime = engine->GetTime();
-	m_lastChatTime = engine->GetTime();
+	m_timeLogoSpray = AddTime(Engine::GetReference()->RandomFloat(0.5f, 2.0f));
+	m_spawnTime = Engine::GetReference()->GetTime();
+	m_lastChatTime = Engine::GetReference()->GetTime();
 	pev->button = 0;
 
 	m_timeCamping = 0;
@@ -1229,7 +1236,7 @@ void Bot::NewRound(void)
 	m_campButtons = 0;
 
 	m_soundUpdateTime = 0.0f;
-	m_heardSoundTime = engine->GetTime() - 8.0f;
+	m_heardSoundTime = Engine::GetReference()->GetTime() - 8.0f;
 
 	// clear its message queue
 	for (i = 0; i < 32; i++)
@@ -1243,7 +1250,7 @@ void Bot::NewRound(void)
 	m_lookAtAPI = nullvec;
 	m_moveAIAPI = false;
 	m_enemyAPI = nullptr;
-	m_blockCheckEnemyTime = engine->GetTime();
+	m_blockCheckEnemyTime = Engine::GetReference()->GetTime();
 	m_knifeDistance1API = 0;
 	m_knifeDistance2API = 0;
 	m_gunMinDistanceAPI = 0;
@@ -1258,10 +1265,10 @@ void Bot::NewRound(void)
 	PushTask(TASK_NORMAL, TASKPRI_NORMAL, -1, 1.0f, true);
 
 	// hear range based on difficulty
-	m_maxhearrange = float(m_skill * engine->RandomFloat(7.0f, 15.0f));
+	m_maxhearrange = float(m_skill * Engine::GetReference()->RandomFloat(7.0f, 15.0f));
 	m_moveSpeed = pev->maxspeed;
 
-	m_tempstrafeSpeed = engine->RandomInt(1, 2) == 1 ? pev->maxspeed : -pev->maxspeed;
+	m_tempstrafeSpeed = Engine::GetReference()->RandomInt(1, 2) == 1 ? pev->maxspeed : -pev->maxspeed;
 }
 
 // this function kills a bot (not just using ClientKill, but like the CSBot does)
@@ -1339,7 +1346,7 @@ void Bot::StartGame(void)
 		m_startAction = CMENU_IDLE;  // switch back to idle
 
 		int maxChoice = (g_gameVersion == CSVER_CZERO) ? 5 : 4;
-		m_wantedClass = engine->RandomInt(1, maxChoice);
+		m_wantedClass = Engine::GetReference()->RandomInt(1, maxChoice);
 
 		// select the class the bot wishes to use...
 		FakeClientCommand(GetEntity(), "menuselect %d", m_wantedClass);
@@ -1348,7 +1355,7 @@ void Bot::StartGame(void)
 		m_notStarted = false;
 
 		// check for greeting other players, since we connected
-		if (engine->RandomInt(1, 3) == 1)
+		if (Engine::GetReference()->RandomInt(1, 3) == 1)
 			ChatMessage(CHAT_HELLO);
 	}
 }

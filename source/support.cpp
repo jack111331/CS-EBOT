@@ -704,7 +704,7 @@ void RoundInit(void)
 		g_botManager->CheckTeamEconomics(TEAM_COUNTER);
 	}
 
-	for (int i = 0; i < engine->GetMaxClients(); i++)
+	for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 	{
 		if (g_botManager->GetBot(i))
 			g_botManager->GetBot(i)->NewRound();
@@ -729,9 +729,9 @@ void RoundInit(void)
 	AutoLoadGameMode();
 
 	// calculate the round mid/end in world time
-	g_timeRoundStart = engine->GetTime() + engine->GetFreezeTime();
-	g_timeRoundMid = g_timeRoundStart + engine->GetRoundTime() * 60 / 2;
-	g_timeRoundEnd = g_timeRoundStart + engine->GetRoundTime() * 60;
+	g_timeRoundStart = Engine::GetReference()->GetTime() + Engine::GetReference()->GetFreezeTime();
+	g_timeRoundMid = g_timeRoundStart + Engine::GetReference()->GetRoundTime() * 60 / 2;
+	g_timeRoundEnd = g_timeRoundStart + Engine::GetReference()->GetRoundTime() * 60;
 }
 
 void AutoLoadGameMode(void)
@@ -786,7 +786,7 @@ void AutoLoadGameMode(void)
 			if (TryFileOpen(FormatBuffer("%s/addons/amxmodx/configs/%s.ini", GetModName(), bteGameINI[i])))
 			{
 				if (bteGameModAi[i] == 2 && i != 5)
-					g_DelayTimer = engine->GetTime() + 20.0f + CVAR_GET_FLOAT("mp_freezetime");
+					g_DelayTimer = Engine::GetReference()->GetTime() + 20.0f + CVAR_GET_FLOAT("mp_freezetime");
 
 				if (checkShowTextTime < 3 || GetGameMode() != bteGameModAi[i])
 					ServerPrint("*** E-BOT Auto Game Mode Setting: CS:BTE [%s] [%d] ***", bteGameINI[i], bteGameModAi[i]);
@@ -843,7 +843,7 @@ void AutoLoadGameMode(void)
 					ServerPrint("*** E-BOT Auto Game Mode Setting: Zombie Mode (Plague/Escape) ***");
 
 				SetGameMod(MODE_ZP);
-				g_DelayTimer = engine->GetTime() + delayTime;
+				g_DelayTimer = Engine::GetReference()->GetTime() + delayTime;
 				goto lastly;
 			}
 		}
@@ -878,7 +878,7 @@ void AutoLoadGameMode(void)
 
 				SetGameMod(MODE_ZP);
 
-				g_DelayTimer = engine->GetTime() + delayTime;
+				g_DelayTimer = Engine::GetReference()->GetTime() + delayTime;
 
 				goto lastly;
 			}
@@ -944,7 +944,7 @@ void AutoLoadGameMode(void)
 
 				SetGameMod(MODE_ZP);
 
-				g_DelayTimer = engine->GetTime() + delayTime;
+				g_DelayTimer = Engine::GetReference()->GetTime() + delayTime;
 
 				goto lastly;
 			}
@@ -1032,7 +1032,7 @@ bool IsDeathmatchMode(void)
 
 bool ChanceOf(int number)
 {
-	return engine->RandomInt(1, 100) <= number;
+	return Engine::GetReference()->RandomInt(1, 100) <= number;
 }
 
 bool IsValidWaypoint(int index)
@@ -1070,7 +1070,7 @@ float Clamp(float a, float b, float c)
 #ifdef __SSE2__
 	return _mm_cvtss_f32(_mm_min_ss(_mm_max_ss(_mm_load_ss(&a), _mm_load_ss(&b)), _mm_load_ss(&c)));
 #else
-	return engine->DoClamp(a, b, c);
+	return Engine::GetReference()->DoClamp(a, b, c);
 #endif
 }
 
@@ -1226,7 +1226,7 @@ int GetTeam(edict_t* ent)
 		player_team = client * client;
 	else if (GetGameMode() == MODE_ZP)
 	{
-		if (g_DelayTimer > engine->GetTime())
+		if (g_DelayTimer > Engine::GetReference()->GetTime())
 			player_team = TEAM_COUNTER;
 		else if (g_roundEnded)
 			player_team = TEAM_TERRORIST;
@@ -1276,8 +1276,8 @@ int SetEntityWaypoint(edict_t* ent, int mode)
 	float traceCheckTime = isPlayer ? g_clients[i].getWPTime : g_entityGetWpTime[i];
 	if ((isPlayer && g_clients[i].wpIndex == -1) || (!isPlayer && g_entityWpIndex[i] == -1))
 		needCheckNewWaypoint = true;
-	else if ((!isPlayer && g_entityGetWpTime[i] == engine->GetTime()) ||
-		(isPlayer && g_clients[i].getWPTime == engine->GetTime() &&
+	else if ((!isPlayer && g_entityGetWpTime[i] == Engine::GetReference()->GetTime()) ||
+		(isPlayer && g_clients[i].getWPTime == Engine::GetReference()->GetTime() &&
 			mode > 0 && g_clients[i].wpIndex2 == -1))
 		needCheckNewWaypoint = false;
 	else if (mode != -1)
@@ -1311,8 +1311,8 @@ int SetEntityWaypoint(edict_t* ent, int mode)
 					needCheckNewWaypoint = true;
 				else
 				{
-					if (traceCheckTime + 5.0f <= engine->GetTime() ||
-						(traceCheckTime + 2.5f <= engine->GetTime() && !g_waypoint->Reachable(ent, wpIndex)))
+					if (traceCheckTime + 5.0f <= Engine::GetReference()->GetTime() ||
+						(traceCheckTime + 2.5f <= Engine::GetReference()->GetTime() && !g_waypoint->Reachable(ent, wpIndex)))
 						needCheckNewWaypoint = true;
 				}
 			}
@@ -1325,11 +1325,11 @@ int SetEntityWaypoint(edict_t* ent, int mode)
 	{
 		if (isPlayer)
 		{
-			g_clients[i].getWPTime = engine->GetTime();
+			g_clients[i].getWPTime = Engine::GetReference()->GetTime();
 			return g_clients[i].wpIndex;
 		}
 
-		g_entityGetWpTime[i] = engine->GetTime();
+		g_entityGetWpTime[i] = Engine::GetReference()->GetTime();
 		return g_entityWpIndex[i];
 	}
 
@@ -1345,14 +1345,14 @@ int SetEntityWaypoint(edict_t* ent, int mode)
 	{
 		g_entityWpIndex[i] = wpIndex;
 		g_entityGetWpOrigin[i] = origin;
-		g_entityGetWpTime[i] = engine->GetTime();
+		g_entityGetWpTime[i] = Engine::GetReference()->GetTime();
 	}
 	else
 	{
 		g_clients[i].wpIndex = wpIndex;
 		g_clients[i].wpIndex2 = wpIndex2;
 		g_clients[i].getWpOrigin = origin;
-		g_clients[i].getWPTime = engine->GetTime();
+		g_clients[i].getWPTime = Engine::GetReference()->GetTime();
 	}
 
 	return wpIndex;
@@ -1383,7 +1383,7 @@ int GetEntityWaypoint(edict_t* ent)
 	}
 
 	int client = ENTINDEX(ent) - 1;
-	if (g_clients[client].getWPTime < engine->GetTime() + 1.5f || (g_clients[client].wpIndex == -1 && g_clients[client].wpIndex2 == -1))
+	if (g_clients[client].getWPTime < Engine::GetReference()->GetTime() + 1.5f || (g_clients[client].wpIndex == -1 && g_clients[client].wpIndex2 == -1))
 		SetEntityWaypoint(ent);
 
 	return g_clients[client].wpIndex;
@@ -1466,9 +1466,9 @@ void HudMessage(edict_t* ent, bool toCenter, const Color& rgb, char* format, ...
 	WRITE_BYTE(static_cast <int> (rgb.green));
 	WRITE_BYTE(static_cast <int> (rgb.blue));
 	WRITE_BYTE(0);
-	WRITE_BYTE(engine->RandomInt(230, 255));
-	WRITE_BYTE(engine->RandomInt(230, 255));
-	WRITE_BYTE(engine->RandomInt(230, 255));
+	WRITE_BYTE(Engine::GetReference()->RandomInt(230, 255));
+	WRITE_BYTE(Engine::GetReference()->RandomInt(230, 255));
+	WRITE_BYTE(Engine::GetReference()->RandomInt(230, 255));
 	WRITE_BYTE(200);
 	WRITE_SHORT(FixedUnsigned16(0.0078125, 1 << 8));
 	WRITE_SHORT(FixedUnsigned16(2, 1 << 8));
@@ -1671,14 +1671,14 @@ void CheckWelcomeMessage(void)
 
 	if (receiveTime == -1.0f && IsAlive(g_hostEntity))
 	{
-		receiveTime = engine->GetTime() + 10.0f;
+		receiveTime = Engine::GetReference()->GetTime() + 10.0f;
 
 #if defined(PRODUCT_DEV_VERSION)	
-		receiveTime = engine->GetTime() + 10.0f;
+		receiveTime = Engine::GetReference()->GetTime() + 10.0f;
 #endif
 	}
 
-	if (receiveTime > 0.0f && receiveTime < engine->GetTime())
+	if (receiveTime > 0.0f && receiveTime < Engine::GetReference()->GetTime())
 	{
 		int buildVersion[4] = { PRODUCT_VERSION_DWORD };
 		int bV16[4] = { buildVersion[0], buildVersion[1], buildVersion[2], buildVersion[3] };
@@ -1740,7 +1740,7 @@ void DetectCSVersion(void)
 		break;
 	}
 
-	engine->GetGameConVarsPointers(); // !!! TODO !!!
+	Engine::GetReference()->GetGameConVarsPointers(); // !!! TODO !!!
 }
 
 void PlaySound(edict_t* ent, const char* name)
@@ -1885,12 +1885,12 @@ void SoundAttachToThreat(edict_t* ent, const char* sample, float volume)
 	Vector origin = GetEntityOrigin(ent);
 	int index = ENTINDEX(ent) - 1;
 
-	if (index < 0 || index >= engine->GetMaxClients())
+	if (index < 0 || index >= Engine::GetReference()->GetMaxClients())
 	{
 		float nearestDistance = FLT_MAX;
 
 		// loop through all players
-		for (int i = 0; i < engine->GetMaxClients(); i++)
+		for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 		{
 			if (!(g_clients[i].flags & CFLAG_USED) || !(g_clients[i].flags & CFLAG_ALIVE))
 				continue;
@@ -1906,56 +1906,56 @@ void SoundAttachToThreat(edict_t* ent, const char* sample, float volume)
 		}
 	}
 
-	if (index < 0 || index >= engine->GetMaxClients())
+	if (index < 0 || index >= Engine::GetReference()->GetMaxClients())
 		return;
 
 	if (strncmp("player/bhit_flesh", sample, 17) == 0 || strncmp("player/headshot", sample, 15) == 0)
 	{
 		// hit/fall sound?
 		g_clients[index].hearingDistance = 768.0f * volume;
-		g_clients[index].timeSoundLasting = engine->GetTime() + 0.5f;
+		g_clients[index].timeSoundLasting = Engine::GetReference()->GetTime() + 0.5f;
 		g_clients[index].soundPosition = origin;
 	}
 	else if (strncmp("items/gunpickup", sample, 15) == 0)
 	{
 		// weapon pickup?
 		g_clients[index].hearingDistance = 768.0f * volume;
-		g_clients[index].timeSoundLasting = engine->GetTime() + 0.5f;
+		g_clients[index].timeSoundLasting = Engine::GetReference()->GetTime() + 0.5f;
 		g_clients[index].soundPosition = origin;
 	}
 	else if (strncmp("weapons/zoom", sample, 12) == 0)
 	{
 		// sniper zooming?
 		g_clients[index].hearingDistance = 512.0f * volume;
-		g_clients[index].timeSoundLasting = engine->GetTime() + 0.1f;
+		g_clients[index].timeSoundLasting = Engine::GetReference()->GetTime() + 0.1f;
 		g_clients[index].soundPosition = origin;
 	}
 	else if (strncmp("items/9mmclip", sample, 13) == 0)
 	{
 		// ammo pickup?
 		g_clients[index].hearingDistance = 512.0f * volume;
-		g_clients[index].timeSoundLasting = engine->GetTime() + 0.1f;
+		g_clients[index].timeSoundLasting = Engine::GetReference()->GetTime() + 0.1f;
 		g_clients[index].soundPosition = origin;
 	}
 	else if (strncmp("hostage/hos", sample, 11) == 0)
 	{
 		// CT used hostage?
 		g_clients[index].hearingDistance = 1024.0f * volume;
-		g_clients[index].timeSoundLasting = engine->GetTime() + 5.0f;
+		g_clients[index].timeSoundLasting = Engine::GetReference()->GetTime() + 5.0f;
 		g_clients[index].soundPosition = origin;
 	}
 	else if (strncmp("debris/bustmetal", sample, 16) == 0 || strncmp("debris/bustglass", sample, 16) == 0)
 	{
 		// broke something?
 		g_clients[index].hearingDistance = 1024.0f * volume;
-		g_clients[index].timeSoundLasting = engine->GetTime() + 2.0f;
+		g_clients[index].timeSoundLasting = Engine::GetReference()->GetTime() + 2.0f;
 		g_clients[index].soundPosition = origin;
 	}
 	else if (strncmp("doors/doormove", sample, 14) == 0)
 	{
 		// someone opened a door
 		g_clients[index].hearingDistance = 1024.0f * volume;
-		g_clients[index].timeSoundLasting = engine->GetTime() + 3.0f;
+		g_clients[index].timeSoundLasting = Engine::GetReference()->GetTime() + 3.0f;
 		g_clients[index].soundPosition = origin;
 	}
 }
@@ -2053,7 +2053,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 {
 	if (message == ChatterMessage::Yes)
 	{
-		int rV = engine->RandomInt(1, 12);
+		int rV = Engine::GetReference()->RandomInt(1, 12);
 		if (rV == 1)
 		{
 			*voice = "affirmative";
@@ -2117,7 +2117,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 	}
 	else if (message == ChatterMessage::No)
 	{
-		int rV = engine->RandomInt(1, 13);
+		int rV = Engine::GetReference()->RandomInt(1, 13);
 		if (rV == 1)
 		{
 			*voice = "ahh_negative";
@@ -2186,7 +2186,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 	}
 	else if (message == ChatterMessage::SeeksEnemy)
 	{
-		int rV = engine->RandomInt(1, 15);
+		int rV = Engine::GetReference()->RandomInt(1, 15);
 		if (rV == 1)
 		{
 			*voice = "help";
@@ -2265,7 +2265,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 	}
 	else if (message == ChatterMessage::Clear)
 	{
-		int rV = engine->RandomInt(1, 17);
+		int rV = Engine::GetReference()->RandomInt(1, 17);
 		if (rV == 1)
 		{
 			*voice = "clear";
@@ -2296,7 +2296,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 			*voice = "where_could_they_be";
 			*dur = 0.0f;
 
-			for (int i = 0; i < engine->GetMaxClients(); i++)
+			for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 			{
 				Bot* otherBot = g_botManager->GetBot(i);
 				if (otherBot != nullptr)
@@ -2308,7 +2308,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 			*voice = "where_is_it";
 			*dur = 0.4f;
 
-			for (int i = 0; i < engine->GetMaxClients(); i++)
+			for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 			{
 				Bot* otherBot = g_botManager->GetBot(i);
 				if (otherBot != nullptr)
@@ -2330,7 +2330,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 			*voice = "anyone_see_anything";
 			*dur = 1.0f;
 
-			for (int i = 0; i < engine->GetMaxClients(); i++)
+			for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 			{
 				Bot* otherBot = g_botManager->GetBot(i);
 				if (otherBot != nullptr)
@@ -2372,7 +2372,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 			*voice = "anyone_see_them";
 			*dur = 0.0f;
 
-			for (int i = 0; i < engine->GetMaxClients(); i++)
+			for (int i = 0; i < Engine::GetReference()->GetMaxClients(); i++)
 			{
 				Bot* otherBot = g_botManager->GetBot(i);
 				if (otherBot != nullptr)
@@ -2382,7 +2382,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 	}
 	else if (message == ChatterMessage::CoverMe)
 	{
-		int rV = engine->RandomInt(1, 2);
+		int rV = Engine::GetReference()->RandomInt(1, 2);
 		if (rV == 1)
 		{
 			*voice = "cover_me";
@@ -2396,7 +2396,7 @@ void GetVoiceAndDur(ChatterMessage message, char* *voice, float *dur)
 	}
 	else if (message == ChatterMessage::Happy)
 	{
-		int rV = engine->RandomInt(1, 10);
+		int rV = Engine::GetReference()->RandomInt(1, 10);
 		if (rV == 1)
 		{
 			*voice = "yea_baby";

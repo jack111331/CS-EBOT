@@ -884,7 +884,7 @@ public:
     //
     virtual ~Array(void)
     {
-        Destory();
+        Destroy();
     }
 
     //
@@ -896,7 +896,7 @@ public:
     // Function: Destory
     //  Destroys array object, and all elements.
     //
-    void Destory(void)
+    void Destroy(void)
     {
         m_resizeStep = m_itemSize = m_itemCount = 0;
         if (m_elements != nullptr) {
@@ -920,7 +920,7 @@ public:
     {
         if (newSize == 0)
         {
-            Destory();
+            Destroy();
             return true;
         }
 
@@ -1790,6 +1790,7 @@ public:
     }
 };
 
+// TODO this need to be refactor...
 class String
 {
 private:

@@ -1232,6 +1232,8 @@ public:
 	BotControl(void);
 	~BotControl(void);
 
+	void Destroy();
+
 	bool EconomicsValid(int team) { return m_economicsGood[team]; }
 
 	int GetLastWinner(void) const { return m_lastWinner; }
@@ -1360,6 +1362,7 @@ public:
 	~Waypoint(void);
 
 	void Initialize(void);
+	void Destroy();
 
 	void Analyze(void);
 	void AnalyzeDeleteUselessWaypoints(void);
